@@ -67,6 +67,7 @@ public class StrategiePersonnage {
 	public void executeStrategie(HashMap<Integer, Point> voisins) throws RemoteException {
 		// arene
 		IArene arene = console.getArene();
+		System.out.println("foo");
 		
 		// reference RMI de l'element courant
 		int refRMI = 0;
