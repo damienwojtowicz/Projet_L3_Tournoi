@@ -4,8 +4,8 @@ package client;
 import java.awt.Point;
 import java.rmi.RemoteException;
 import java.util.HashMap;
+import java.util.Map;
 
-import client.controle.Console;
 import logger.LoggerProjet;
 import serveur.IArene;
 import serveur.element.Caracteristique;
@@ -14,6 +14,7 @@ import serveur.element.Personnage;
 import serveur.element.Potion;
 import utilitaires.Calculs;
 import utilitaires.Constantes;
+import client.controle.Console;
 
 /**
  * Strategie d'un personnage. 
@@ -111,6 +112,169 @@ public class StrategiePersonnage {
 			}
 		}
 	}
+	
+	public void stratDamien(HashMap<Integer, Point> voisins) throws RemoteException {
+		// arene
+		IArene arene = console.getArene();
+		
+		// reference RMI de l'element courant
+		int refRMI = 0;
+		
+		// position de l'element courant
+		Point position = null;
+		
+		try {
+			refRMI = console.getRefRMI();
+			position = arene.getPosition(refRMI);
+		} catch (RemoteException e) {
+			e.printStackTrace();
+		}
+		
+		if (voisins.isEmpty()) { // je n'ai pas de voisins, j'erre
+			console.setPhrase("J'erre...");
+			arene.deplace(refRMI, 0); 
+			
+		} else {
+			
+			// Réf et score de la popo la plus intéressante
+			int refPopo = 0;
+			int scorePopo = 0;
+			
+			// Recherche de la popo
+			for (Map.Entry<Integer, Point> e : voisins.entrySet()) {
+				Element elt = arene.elementFromRef(e.getKey());
+				
+				if (elt instanceof Potion) {
+					int scoreCourant = calculScorePopo((Potion) elt, e.getValue());
+					
+					// Si la potion est meilleure, on la remplace
+					if (scoreCourant > scorePopo) {
+						scorePopo = scoreCourant;
+						refPopo = e.getKey();
+					}
+					
+				}
+			}
+			
+			if (scorePopo <= -200) { // Pas de popo intéressante, donc on erre...
+				console.setPhrase("Pas de popo sympa (" + arene.elementFromRef(refPopo).getNom() + " à " + scorePopo + ")");
+				arene.deplace(refRMI, 0); 
+			} else {
+	
+				// Calcul de la distance avec la potion
+				int distPopo = Calculs.distanceChebyshev(position, arene.getPosition(refPopo));
+				
+				if(distPopo <= Constantes.DISTANCE_MIN_INTERACTION) {
+					// La popo est à portée, donc on la boit
+					console.setPhrase("Je bois ma potion cible !");
+					arene.ramassePotion(refRMI, refPopo);
+	
+				} else { 
+					// Sinon, on se déplace vers elle
+					console.setPhrase("Je vais vers ma potion " + arene.elementFromRef(refPopo).getNom() + " à " + scorePopo);
+					arene.deplace(refRMI, refPopo);
+				}
+			}
+		}
+	}
+	
+	private int calculScorePopo(Potion popo, Point pt) {
+		
+		// Score de la potion
+		int scorePopo = -5000;
+		
+		try {
+			// Récupérations des caractéristiques du personnage
+			int viePerso = console.getPersonnage().getCaract(Caracteristique.VIE);
+			int forcePerso = console.getPersonnage().getCaract(Caracteristique.FORCE);
+			int initPerso = console.getPersonnage().getCaract(Caracteristique.INITIATIVE);
+			
+			// Récupérations des caractéristiques de la popo
+			int viePopo = popo.getCaract(Caracteristique.VIE);
+			int forcePopo = popo.getCaract(Caracteristique.FORCE);
+			int initPopo = popo.getCaract(Caracteristique.INITIATIVE) / 2;
+			
+			// Si la popo peut tuer, on ne la prend surtout pas !
+			if (viePopo * -1 >= viePerso)
+				return scorePopo;
+			
+			scorePopo = 0;
+
+			// Ratio de combat du perso
+			float ratio = forcePerso / initPerso;
+			
+			// Calcul du besoin en potion
+			if (viePerso > 75) { 
+				// Le perso est en bonne santé, donc
+				// on met la régen est peu importante
+				scorePopo = viePopo;
+				
+				// On choisit la meilleure en fonction du ratio de combat				
+				if (ratio < 0.9) {	// Il y a plus d'initiative que de force...
+					scorePopo = scorePopo + forcePopo * 2;
+					scorePopo = scorePopo + initPopo;
+					
+				} else if (ratio < 1.2) { // Quantités de force et d'initiative équitables
+					scorePopo = scorePopo + forcePopo;
+					scorePopo = scorePopo + initPopo;
+					
+				} else { // Il y a plus d'initiative que de force...
+					scorePopo = scorePopo + forcePopo;
+					scorePopo = scorePopo + initPopo * 2;
+				}
+				
+			} else if (viePerso > 40) {
+				// Le perso est en santé moyenne, donc
+				// la régen est assez importante
+				scorePopo = viePopo * 2;
+				
+				// On choisit la meilleure en fonction du ratio de combat				
+				if (ratio < 0.95) {	// Il y a plus d'initiative que de force...
+					scorePopo = scorePopo + forcePopo ;
+					scorePopo = scorePopo + initPopo / 2;
+					
+				} else if (ratio < 1.05) { // Quantités de force et d'initiative équitables
+					scorePopo = scorePopo + forcePopo;
+					scorePopo = scorePopo + initPopo;
+					
+				} else { // Il y a plus d'initiative que de force...
+					scorePopo = scorePopo + forcePopo / 2;
+					scorePopo = scorePopo + initPopo ;
+				}
+				
+			} else { 
+				// Le perso va mal, donc
+				// on met la priorité sur la régen
+				scorePopo = viePopo * 4;
+				
+				// On choisit la meilleure en fonction du ratio de combat				
+				if (ratio < 0.95) {	// Il y a plus d'initiative que de force...
+					scorePopo = scorePopo + forcePopo;
+					scorePopo = scorePopo + initPopo / 2;
+					
+				} else if (ratio < 1.05) { // Quantités de force et d'initiative équitables
+					scorePopo = scorePopo + forcePopo;
+					scorePopo = scorePopo + initPopo;
+					
+				} else { // Il y a plus d'initiative que de force...
+					scorePopo = scorePopo + forcePopo / 2;
+					scorePopo = scorePopo + initPopo;
+				}
+			}
+			
+			
+			// Récupération de la position du perso
+			//Point position = console.getArene().getPosition(console.getRefRMI());
+			
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+			scorePopo = -4000;
+		}
+		
+		return scorePopo;
+	}
+
 
 	
 }
