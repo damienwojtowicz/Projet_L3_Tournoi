@@ -136,7 +136,7 @@ public class StrategiePersonnage {
 			
 		} else {
 			
-			// Réf et score de la popo la plus intéressante
+			// RÃ©f et score de la popo la plus intÃ©ressante
 			int refPopo = 0;
 			int scorePopo = 0;
 			
@@ -156,8 +156,8 @@ public class StrategiePersonnage {
 				}
 			}
 			
-			if (scorePopo <= -200) { // Pas de popo intéressante, donc on erre...
-				console.setPhrase("Pas de popo sympa (" + arene.elementFromRef(refPopo).getNom() + " à " + scorePopo + ")");
+			if (scorePopo <= -200) { // Pas de popo intÃ©ressante, donc on erre...
+				console.setPhrase("Pas de popo sympa (" + arene.elementFromRef(refPopo).getNom() + " Ã© " + scorePopo + ")");
 				arene.deplace(refRMI, 0); 
 			} else {
 	
@@ -165,13 +165,13 @@ public class StrategiePersonnage {
 				int distPopo = Calculs.distanceChebyshev(position, arene.getPosition(refPopo));
 				
 				if(distPopo <= Constantes.DISTANCE_MIN_INTERACTION) {
-					// La popo est à portée, donc on la boit
+					// La popo est Ã© portÃ©e, donc on la boit
 					console.setPhrase("Je bois ma potion cible !");
 					arene.ramassePotion(refRMI, refPopo);
 	
 				} else { 
-					// Sinon, on se déplace vers elle
-					console.setPhrase("Je vais vers ma potion " + arene.elementFromRef(refPopo).getNom() + " à " + scorePopo);
+					// Sinon, on se dÃ©place vers elle
+					console.setPhrase("Je vais vers ma potion " + arene.elementFromRef(refPopo).getNom() + " Ã© " + scorePopo);
 					arene.deplace(refRMI, refPopo);
 				}
 			}
@@ -184,12 +184,12 @@ public class StrategiePersonnage {
 		int scorePopo = -5000;
 		
 		try {
-			// Récupérations des caractéristiques du personnage
+			// RÃ©cupÃ©rations des caractÃ©ristiques du personnage
 			int viePerso = console.getPersonnage().getCaract(Caracteristique.VIE);
 			int forcePerso = console.getPersonnage().getCaract(Caracteristique.FORCE);
 			int initPerso = console.getPersonnage().getCaract(Caracteristique.INITIATIVE);
 			
-			// Récupérations des caractéristiques de la popo
+			// RÃ©cupÃ©rations des caractÃ©ristiques de la popo
 			int viePopo = popo.getCaract(Caracteristique.VIE);
 			int forcePopo = popo.getCaract(Caracteristique.FORCE);
 			int initPopo = popo.getCaract(Caracteristique.INITIATIVE) / 2;
@@ -205,8 +205,8 @@ public class StrategiePersonnage {
 			
 			// Calcul du besoin en potion
 			if (viePerso > 75) { 
-				// Le perso est en bonne santé, donc
-				// on met la régen est peu importante
+				// Le perso est en bonne santÃ©, donc
+				// on met la rÃ©gen est peu importante
 				scorePopo = viePopo;
 				
 				// On choisit la meilleure en fonction du ratio de combat				
@@ -214,7 +214,7 @@ public class StrategiePersonnage {
 					scorePopo = scorePopo + forcePopo * 2;
 					scorePopo = scorePopo + initPopo;
 					
-				} else if (ratio < 1.2) { // Quantités de force et d'initiative équitables
+				} else if (ratio < 1.2) { // QuantitÃ©s de force et d'initiative Ã©quitables
 					scorePopo = scorePopo + forcePopo;
 					scorePopo = scorePopo + initPopo;
 					
@@ -224,8 +224,8 @@ public class StrategiePersonnage {
 				}
 				
 			} else if (viePerso > 40) {
-				// Le perso est en santé moyenne, donc
-				// la régen est assez importante
+				// Le perso est en santÃ© moyenne, donc
+				// la rÃ©gen est assez importante
 				scorePopo = viePopo * 2;
 				
 				// On choisit la meilleure en fonction du ratio de combat				
@@ -233,7 +233,7 @@ public class StrategiePersonnage {
 					scorePopo = scorePopo + forcePopo ;
 					scorePopo = scorePopo + initPopo / 2;
 					
-				} else if (ratio < 1.05) { // Quantités de force et d'initiative équitables
+				} else if (ratio < 1.05) { // QuantitÃ©s de force et d'initiative Ã©quitables
 					scorePopo = scorePopo + forcePopo;
 					scorePopo = scorePopo + initPopo;
 					
@@ -244,7 +244,7 @@ public class StrategiePersonnage {
 				
 			} else { 
 				// Le perso va mal, donc
-				// on met la priorité sur la régen
+				// on met la prioritÃ© sur la rÃ©gen
 				scorePopo = viePopo * 4;
 				
 				// On choisit la meilleure en fonction du ratio de combat				
@@ -252,7 +252,7 @@ public class StrategiePersonnage {
 					scorePopo = scorePopo + forcePopo;
 					scorePopo = scorePopo + initPopo / 2;
 					
-				} else if (ratio < 1.05) { // Quantités de force et d'initiative équitables
+				} else if (ratio < 1.05) { // QuantitÃ©s de force et d'initiative Ã©quitables
 					scorePopo = scorePopo + forcePopo;
 					scorePopo = scorePopo + initPopo;
 					
@@ -263,7 +263,7 @@ public class StrategiePersonnage {
 			}
 			
 			
-			// Récupération de la position du perso
+			// RÃ©cupÃ©ration de la position du perso
 			//Point position = console.getArene().getPosition(console.getRefRMI());
 			
 			
