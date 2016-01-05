@@ -66,56 +66,6 @@ public class StrategiePersonnage {
 	 * @throws RemoteException
 	 */
 	public void executeStrategie(HashMap<Integer, Point> voisins) throws RemoteException {
-		/*// arene
-		IArene arene = console.getArene();
-		
-		// reference RMI de l'element courant
-		int refRMI = 0;
-		
-		// position de l'element courant
-		Point position = null;
-		
-		try {
-			refRMI = console.getRefRMI();
-			position = arene.getPosition(refRMI);
-		} catch (RemoteException e) {
-			e.printStackTrace();
-		}
-		
-		if (voisins.isEmpty()) { // je n'ai pas de voisins, j'erre
-			console.setPhrase("J'erre...");
-			arene.deplace(refRMI, 0); 
-			
-		} else {
-			int refCible = Calculs.chercheElementProche(position, voisins);
-			int distPlusProche = Calculs.distanceChebyshev(position, arene.getPosition(refCible));
-
-			Element elemPlusProche = arene.elementFromRef(refCible);
-
-			if(distPlusProche <= Constantes.DISTANCE_MIN_INTERACTION) { // si suffisamment proches
-				// j'interagis directement
-				if(elemPlusProche instanceof Potion) { // potion
-					// ramassage
-					console.setPhrase("Je ramasse une potion");
-					arene.ramassePotion(refRMI, refCible);
-
-				} else { // personnage
-					// duel
-					console.setPhrase("Je fais un duel avec " + elemPlusProche.getNom());
-					arene.lanceAttaque(refRMI, refCible);
-				}
-				
-			} else { // si voisins, mais plus eloignes
-				// je vais vers le plus proche
-				console.setPhrase("Je vais vers mon voisin " + elemPlusProche.getNom());
-				arene.deplace(refRMI, refCible);
-			}
-		}*/
-		
-		stratDamien(voisins);
-	}
-	
-	public void stratDamien(HashMap<Integer, Point> voisins) throws RemoteException {
 		// arene
 		IArene arene = console.getArene();
 		
@@ -138,49 +88,81 @@ public class StrategiePersonnage {
 			
 		} else {
 			
-			// Réf et score de la popo la plus intéressante
-			int refPopo = 0;
-			int scorePopo = 0;
+			// Réf et score du voisin le plus intéressant
+			int refVois = 0;
+			int scoreVois = 0;
+			int scoreCourant;
 			
-			// Recherche de la popo
+			// Calcul de la distance avec le voisin
+			int distVois = Calculs.distanceChebyshev(position, arene.getPosition(refVois));
+			
+			// Recherche du voisin
 			for (Map.Entry<Integer, Point> e : voisins.entrySet()) {
 				Element elt = arene.elementFromRef(e.getKey());
 				
-				if (elt instanceof Potion) {
-					int scoreCourant = calculScorePopo((Potion) elt, e.getKey(), e.getValue());
-					
-					// Si la potion est meilleure, on la remplace
-					if (scoreCourant > scorePopo) {
-						scorePopo = scoreCourant;
-						refPopo = e.getKey();
-					}
-					
+				if (elt instanceof Potion)
+					scoreCourant = calculScorePopo((Potion) elt);
+				else if (elt instanceof Personnage)
+					scoreCourant = calculScorePerso((Personnage) elt);
+				else
+					scoreCourant = 0;
+				
+				// Modificateur de distance
+				scoreCourant -= distVois*10/3;
+				
+				// Si le voisin est meilleur, on le remplace
+				if (scoreCourant > scoreVois) {
+					scoreVois = scoreCourant;
+					refVois = e.getKey();
 				}
 			}
 			
-			if (scorePopo <= -200) { // Pas de popo intéressante, donc on erre...
-				console.setPhrase("Pas de popo sympa (" + arene.elementFromRef(refPopo).getNom() + "-" + arene.elementFromRef(refPopo).getGroupe()  + " à " + scorePopo + ")");
-				arene.deplace(refRMI, 0); 
-			} else {
-	
-				// Calcul de la distance avec la potion
-				int distPopo = Calculs.distanceChebyshev(position, arene.getPosition(refPopo));
+			if (voisins.size() == 0) { // Pas de voisins...
+				console.setPhrase("J'attend...)");
+				arene.deplace(refRMI, 0);
 				
-				if(distPopo <= Constantes.DISTANCE_MIN_INTERACTION) {
-					// La popo est à portée, donc on la boit
-					console.setPhrase("Je bois ma potion cible !");
-					arene.ramassePotion(refRMI, refPopo);
-	
+			} if (scoreVois <= -200) { // Pas de voisin intéressant, donc on erre...
+				console.setPhrase("Pas de voisin sympa (" + arene.elementFromRef(refVois).getNom() + "-" + arene.elementFromRef(refVois).getGroupe()  + " à " + scoreVois + ")");
+				arene.deplace(refRMI, 0); 
+			
+			} else {
+				Element eltVois = arene.elementFromRef(refVois);
+				
+				if(distVois <= Constantes.DISTANCE_MIN_INTERACTION) { // Le voisin est à portée...
+					
+					if (eltVois instanceof Potion) {
+						// Si c'est une popo, on la boit !
+						console.setPhrase("Je bois ma potion cible !");
+						arene.ramassePotion(refRMI, refVois);
+					
+					} else if (eltVois instanceof Personnage) {
+						// Si c'est un perso, on attaque !
+						console.setPhrase("En garde, " + eltVois.getNom() + " du " + eltVois.getNomGroupe() + " !");
+						arene.lanceAttaque(refRMI, refVois);
+						
+					} else {
+						// Sinon, on se plaint...
+						console.setPhrase("M'aurait-on menti ?");
+					}
+					
 				} else { 
-					// Sinon, on se déplace vers elle
-					console.setPhrase("Je vais vers ma potion " + arene.elementFromRef(refPopo).getNom() + "-" + arene.elementFromRef(refPopo).getGroupe()  + " à " + scorePopo);
-					arene.deplace(refRMI, refPopo);
+					// Sinon, on se déplace vers lui
+					console.setPhrase("Je vais vers mon voisin " + eltVois.getNom() + "-" + eltVois.getGroupe()  + " à " + scoreVois);
+					arene.deplace(refRMI, refVois);
 				}
 			}
 		}
 	}
 	
-	private int calculScorePopo(Potion popo, int refPopo, Point pt) {
+	
+	/**
+	 * Calcule le score d'une potion en fonction de ses caractéristiques et de l'état du personnage courant,
+	 * princialement celui de sa vie. Plus le score sera élevé, plus la potion sera intéressante. Ne prend pas 
+	 * en compte la distance entre le personnage et la potion.
+	 * @param popo La potion dont on veut calculer le score
+	 * @return Le score de la potion passée en paramètre, ou -5000 ou -4000 en cas de problème dans le calcul.
+	 */
+	private int calculScorePopo(Potion popo) {
 		
 		// Score de la potion
 		int scorePopo = -5000;
@@ -264,13 +246,13 @@ public class StrategiePersonnage {
 				}
 			}
 			
+			// Si le perso est assez mal, on va favoriser les popo
+			if (viePerso < 50)
+				scorePopo += (scorePopo / 2);
 			
-			// Récupération de la position du perso
-			Point position = console.getArene().getPosition(console.getRefRMI());
-			int distancePopo = Calculs.distanceChebyshev(position, console.getArene().getPosition(refPopo));
-			
-			// On soustrait la distance mise sur 100
-			scorePopo -= distancePopo*10/3;
+			// Si le perso est vraiment mal, on ne se bat pas
+			if (viePerso < 25)
+				scorePopo += (scorePopo / 2);
 			
 			
 		} catch (Exception e) {
@@ -279,5 +261,55 @@ public class StrategiePersonnage {
 		}
 		
 		return scorePopo;
+	}
+	
+
+	/**
+	 * Calcule le score d'un personnage en fonction de ses caractéristiques et de l'état du personnage courant,
+	 * princialement celui de sa vie. Plus le score sera élevé, plus le personnage sera intéressant à attaquer. 
+	 * Ne prend pas en compte la distance entre le personnage et nous.
+	 * @param perso Le personnage dont on veut calculer le score
+	 * @return Le score du personnage passée en paramètre, ou -5000 ou -4000 en cas de problème dans le calcul.
+	 */
+	private int calculScorePerso(Personnage perso) {
+		
+		// Score du perso
+		int scorePerso = -5000;
+		
+		try {
+			// Récupérations des caractéristiques du personnage
+			int vieMonPerso = console.getPersonnage().getCaract(Caracteristique.VIE);
+			int forceMonPerso = console.getPersonnage().getCaract(Caracteristique.FORCE);
+			int initMonPerso = console.getPersonnage().getCaract(Caracteristique.INITIATIVE);
+			
+			// Récupérations des caractéristiques du perso
+			int viePerso = perso.getCaract(Caracteristique.VIE);
+			int forcePerso = perso.getCaract(Caracteristique.FORCE);
+			int initPerso = perso.getCaract(Caracteristique.INITIATIVE);
+			
+			
+			if (vieMonPerso > 75) { 
+				
+			} else if (vieMonPerso > 40) {
+				
+			} else { 
+				
+			}
+			
+			// Si le perso est assez mal, on va favoriser les popo
+			if (vieMonPerso < 50)
+				scorePerso -= (scorePerso / 2);
+			
+			// Si le perso est vraiment mal, on ne se bat pas
+			if (vieMonPerso < 25)
+				scorePerso -= (scorePerso / 2);
+			
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+			scorePerso = -4000;
+		}
+		
+		return scorePerso;
 	}
 }
