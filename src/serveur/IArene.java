@@ -211,6 +211,10 @@ public interface IArene extends Remote {
 	 */
 	public boolean lanceAttaque(int refRMI, int refAdv) throws RemoteException;
 	
+
+	public HashMap<Caracteristique,Integer> lanceClairvoyance(int refRMI, int refRMIAdv) throws RemoteException;
+	public boolean lanceAutoSoin(int refRMI) throws RemoteException;
+	
 	/**
 	 * Deplace le personnage correspondant a la console donne vers l'element 
 	 * correspondant a la reference RMI cible.

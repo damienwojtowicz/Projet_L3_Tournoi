@@ -3,6 +3,7 @@ package client;
 
 import java.awt.Point;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -26,6 +27,8 @@ public class StrategiePersonnage {
 	 * (l'arene).
 	 */
 	protected Console console;
+	
+	private ArrayList<int []> memoireClervoyance;
 	
 	protected StrategiePersonnage(LoggerProjet logger){
 		logger.info("Lanceur", "Creation de la console...");
@@ -84,12 +87,29 @@ public class StrategiePersonnage {
 			e.printStackTrace();
 		}
 		
-		if (voisins.isEmpty()) { // je n'ai pas de voisins, j'erre
-			console.setPhrase("J'erre...");
-			arene.deplace(refRMI, 0); 
+		// Si la vie du personage est en dessous de 15, on se met en PLS
+		boolean enPLS = console.getPersonnage().getCaract(Caracteristique.VIE) < 15;
+		
+		/*
+		 * Prise de décision
+		 */
+		
+		// En cas d'absence de voisins
+		if (voisins.isEmpty() || voisins.size() <= 0) {
 			
+			// Je me soigne jusqu'à être regénéré
+			if (console.getPersonnage().getCaract(Caracteristique.VIE) < 100) {
+				console.setPhrase("Je me soigne");
+				arene.lanceAutoSoin(refRMI);
+			
+			// Puis je me déplace
+			} else {
+				console.setPhrase("J'erre...");
+				arene.deplace(refRMI, 0);
+			}
+		
+		// En cas de présence de voisins
 		} else {
-			
 			// Réf et score du voisin le plus intéressant
 			int refVois = 0;
 			int scoreVois = 0;
@@ -98,38 +118,41 @@ public class StrategiePersonnage {
 			// Calcul de la distance avec le voisin
 			int distVois = Calculs.distanceChebyshev(position, arene.getPosition(refVois));
 			
-			// Recherche du voisin
+			// Analyse des voisins et recherche du voisin à cibler
 			for (Map.Entry<Integer, Point> e : voisins.entrySet()) {
 				
+				// Si on est en PLS, on ne se déplacera pas plus loin que 7 cases pour boire une potion
 				if (arene.estPotionFromRef(e.getKey()))
-					scoreCourant = calculScorePopo(e.getKey());
+					scoreCourant = enPLS && distVois < 7 ? -1000 : calculScorePopo(e.getKey());
 				
+				// Si on est en PLS, on évite le combat avec les personnages...
 				else if (arene.estPersonnageFromRef(e.getKey()))
-					scoreCourant = calculScorePerso(e.getKey());
+					scoreCourant = enPLS ? -1000 : calculScorePerso(e.getKey());
+
+				// ...et avec les minions.
+				else if (arene.estMonstreFromRef(e.getKey()))
+					scoreCourant = enPLS ? -1000 : calculScorePerso(e.getKey());
 				
+				// On ignore les trucs inconnus
 				else
-					scoreCourant = 0;
+					scoreCourant = -100;
 				
 				// Modificateur de distance
 				scoreCourant -= distVois;
 				
-				// Si le voisin est meilleur, on le remplace
+				// Si le voisin est une meilleure cible, on écrase l'ancien
 				if (scoreCourant > scoreVois) {
 					scoreVois = scoreCourant;
 					refVois = e.getKey();
 				}
 			}
 			
-			if (voisins.size() == 0) { // Pas de voisins...
-				console.setPhrase("J'attend...)");
-				arene.deplace(refRMI, 0);
-				
-			} if (scoreVois <= -200) { // Pas de voisin intéressant, donc on erre...
+			if (scoreVois <= -200) { // Pas de voisin intéressant, donc on erre...
 				console.setPhrase("Pas de voisin sympa (" + arene.nomFromRef(refVois) + "-" + refVois + " à " + scoreVois + ")");
 				arene.deplace(refRMI, 0); 
 			
 			} else {
-				
+			
 				if(distVois <= Constantes.DISTANCE_MIN_INTERACTION) { // Le voisin est à portée...
 					
 					if (arene.estPotionFromRef(refVois)) {
@@ -283,7 +306,7 @@ public class StrategiePersonnage {
 
 
 	/**
-	 * Calcule le score d'un personnage en fonction de ses caractéristiques et de l'état du personnage courant,
+	 * Calcule le score d'un personnage en fonction de sa vie et de l'état du personnage courant,
 	 * princialement celui de sa vie. Plus le score sera élevé, plus le personnage sera intéressant à attaquer. 
 	 * Ne prend pas en compte la distance entre le personnage et nous.
 	 * @param perso Le personnage dont on veut calculer le score
@@ -306,10 +329,8 @@ public class StrategiePersonnage {
 			int initMonPerso = console.getPersonnage().getCaract(Caracteristique.INITIATIVE);
 			int defenseMonPerso = console.getPersonnage().getCaract(Caracteristique.DEFENSE);
 			
-			// Récupérations des caractéristiques de la popo
+			// Récupérations de la vie caractéristiques de la popo
 			int viePerso = arene.caractFromRef(perso, Caracteristique.VIE);
-			int forcePerso = arene.caractFromRef(perso, Caracteristique.FORCE);
-			int initPerso = arene.caractFromRef(perso, Caracteristique.INITIATIVE) / 2;
 			
 			
 			if (vieMonPerso > 75) { 
