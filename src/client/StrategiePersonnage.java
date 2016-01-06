@@ -147,7 +147,13 @@ public class StrategiePersonnage {
 				}
 			}
 			
-			if (scoreVois <= -200) { // Pas de voisin intéressant, donc on erre...
+			
+			// Pas de voisin intéressant...
+			if (scoreVois <= -200) {
+			
+				// Si on est dans le rayon d'action de plusieurs personnages, on s'échappe
+				
+				
 				console.setPhrase("Pas de voisin sympa (" + arene.nomFromRef(refVois) + "-" + refVois + " à " + scoreVois + ")");
 				arene.deplace(refRMI, 0); 
 			
