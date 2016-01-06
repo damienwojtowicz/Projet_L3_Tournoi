@@ -11,9 +11,7 @@ import client.controle.Console;
 import logger.LoggerProjet;
 import serveur.IArene;
 import serveur.element.Caracteristique;
-import serveur.element.Element;
 import serveur.element.Personnage;
-import serveur.element.Potion;
 import utilitaires.Calculs;
 import utilitaires.Constantes;
 
@@ -28,7 +26,7 @@ public class StrategiePersonnage {
 	 */
 	protected Console console;
 	
-	private ArrayList<int []> memoireClervoyance;
+	private static ArrayList<MemoirePersonnage> memoireClervoyance = new ArrayList();
 	
 	protected StrategiePersonnage(LoggerProjet logger){
 		logger.info("Lanceur", "Creation de la console...");
@@ -71,8 +69,13 @@ public class StrategiePersonnage {
 	 * @throws RemoteException
 	 */
 	public void executeStrategie(HashMap<Integer, Point> voisins) throws RemoteException {
+		
 		// arene
 		IArene arene = console.getArene();
+		
+
+		// Nettoyage des entrées obsolètes dans le mémoire
+		memoireClervoyance = MemoirePersonnage.nettoyerMemoire(memoireClervoyance, arene.getTour());
 		
 		// reference RMI de l'element courant
 		int refRMI = 0;
@@ -121,9 +124,9 @@ public class StrategiePersonnage {
 			// Analyse des voisins et recherche du voisin à cibler
 			for (Map.Entry<Integer, Point> e : voisins.entrySet()) {
 				
-				// Si on est en PLS, on ne se déplacera pas plus loin que 7 cases pour boire une potion
+				// Si on est en PLS, on ne se déplacera pas plus loin que 5 cases pour boire une potion
 				if (arene.estPotionFromRef(e.getKey()))
-					scoreCourant = enPLS && distVois < 7 ? -1000 : calculScorePopo(e.getKey());
+					scoreCourant = enPLS && distVois < 5 ? -1000 : calculScorePopo(e.getKey());
 				
 				// Si on est en PLS, on évite le combat avec les personnages...
 				else if (arene.estPersonnageFromRef(e.getKey()))
@@ -297,7 +300,7 @@ public class StrategiePersonnage {
 			if (viePerso < 50)
 				scorePopo *= 1.5;
 			
-			// Si le perso est vraiment mal, on ne se bat pas
+			// Si le perso est vraiment mal, favorise encore les popo
 			if (viePerso < 25)
 				scorePopo *= 1.5;
 			
@@ -312,15 +315,30 @@ public class StrategiePersonnage {
 
 
 	/**
-	 * Calcule le score d'un personnage en fonction de sa vie et de l'état du personnage courant,
-	 * princialement celui de sa vie. Plus le score sera élevé, plus le personnage sera intéressant à attaquer. 
-	 * Ne prend pas en compte la distance entre le personnage et nous.
+	 * Commande le calcul du score d'un personnage.
 	 * @param perso Le personnage dont on veut calculer le score
 	 * @return Le score du personnage passée en paramètre, ou -5000 ou -4000 en cas de problème dans le calcul.
 	 */
 	private int calculScorePerso(int perso) {
-
-		// TODO : Faire le calcul !!
+		
+		// Si on a déjà observé le personnage, on fait une analyse qualitative
+		if (MemoirePersonnage.dansMemoire(memoireClervoyance, perso))
+			return calculScorePersoQuantitatif(perso);
+			
+		// Sinon, on fait une analyse quantitative
+		else
+			return calculScorePersoQualitatif(perso);
+		
+	}
+	
+	
+	/**
+	 * Calcule le score d'un personnage en fonction de ses caractéristiques observées
+	 * par clervoyance et de son score qualitatif.
+	 * @param perso Le personnage dont on veut calculer le score
+	 * @return Le score du personnage passée en paramètre, ou -5000 ou -4000 en cas de problème dans le calcul.
+	 */
+	private int calculScorePersoQuantitatif(int perso) {
 		
 		// Score du personnage
 		int scorePerso = -5000;
@@ -335,8 +353,12 @@ public class StrategiePersonnage {
 			int initMonPerso = console.getPersonnage().getCaract(Caracteristique.INITIATIVE);
 			int defenseMonPerso = console.getPersonnage().getCaract(Caracteristique.DEFENSE);
 			
-			// Récupérations de la vie caractéristiques de la popo
+			// Récupération de la vie actuelle du perso et de notre souvenir
 			int viePerso = arene.caractFromRef(perso, Caracteristique.VIE);
+			MemoirePersonnage souvenir = memoireClervoyance.get(perso);
+			
+			// Calcul du score qualitatif du personnage
+			scorePerso = calculScorePersoQualitatif(perso);
 			
 			
 			if (vieMonPerso > 75) { 
@@ -351,7 +373,84 @@ public class StrategiePersonnage {
 			if (vieMonPerso < 50)
 				scorePerso -= (scorePerso / 2);
 			
-			// Si le perso est vraiment mal, on ne se bat pas
+			// Si le perso est vraiment mal, favorise encore les popo
+			if (vieMonPerso < 25)
+				scorePerso -= (scorePerso / 2);
+			
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+			scorePerso = -4000;
+		}
+		
+		return scorePerso;
+	}
+	
+	
+
+	/**
+	 * Calcule le score d'un personnage en fonction de sa vie et de nos qualités.
+	 * @param perso Le personnage dont on veut calculer le score
+	 * @return Le score du personnage passée en paramètre, ou -5000 ou -4000 en cas de problème dans le calcul.
+	 */
+	private int calculScorePersoQualitatif(int perso) {
+		
+		// Score du personnage
+		int scorePerso = -5000;
+		
+		try {
+			// Récupération de l'arène
+			IArene arene = console.getArene();
+			
+			// Récupérations des caractéristiques du personnage
+			int vieMonPerso = console.getPersonnage().getCaract(Caracteristique.VIE);
+			int forceMonPerso = console.getPersonnage().getCaract(Caracteristique.FORCE);
+			int initMonPerso = console.getPersonnage().getCaract(Caracteristique.INITIATIVE);
+			int defenseMonPerso = console.getPersonnage().getCaract(Caracteristique.DEFENSE);
+			
+			// Récupération de la vie du voisin
+			int vieVoisin = arene.caractFromRef(perso, Caracteristique.VIE);
+			
+			/*
+			 * Calcul du score sans modificateurs
+			 */
+			
+			// Nombre de coups pour tuer l'adversaire
+			int meilleurNbCoups = 0;
+			int pireNbCoups = 0;
+			int vieVoisinTmp = vieVoisin;
+			
+			// Calcul du meilleur cas possible en combat (adversaire sans défenses)
+			do {
+				vieVoisinTmp -= forceMonPerso;
+				meilleurNbCoups ++;
+			} while (vieVoisinTmp > 0);
+			
+			// Calcul du meilleur cas possible en combat (adversaire défendu qui se régen)
+			vieVoisinTmp = vieVoisin;
+			do {
+				vieVoisinTmp -= forceMonPerso*0.5 - 2;
+				pireNbCoups ++;
+			} while (vieVoisinTmp > 0);
+			
+			// Score du personnage
+			scorePerso = (-80*pireNbCoups+280)/2 + (-80*meilleurNbCoups+280)/2;
+			
+			/*
+			 * Application des modificateurs
+			 */
+			
+			// Bonus/Malus en fonction de la vie de l'adversaire
+			if (vieVoisin > 75)
+				scorePerso *= 0.7;
+			else if (vieVoisin < 45)
+				scorePerso *= 1.3;
+			
+			// Si on est assez mal, on va éviter le combat
+			if (vieMonPerso < 50)
+				scorePerso -= (scorePerso / 3);
+			
+			// Si on perso est vraiment mal, on va éviter encore plus le combat
 			if (vieMonPerso < 25)
 				scorePerso -= (scorePerso / 2);
 			
