@@ -59,8 +59,7 @@ public class StrategiePersonnage {
 		}
 	}
 
-	// TODO etablir une strategie afin d'evoluer dans l'arene de combat
-	// une proposition de strategie (simple) est donnee ci-dessous
+
 	/** 
 	 * Decrit la strategie.
 	 * Les methodes pour evoluer dans le jeu doivent etre les methodes RMI
@@ -112,7 +111,7 @@ public class StrategiePersonnage {
 					scoreCourant = 0;
 				
 				// Modificateur de distance
-				scoreCourant -= distVois*10/3;
+				scoreCourant -= distVois;
 				
 				// Si le voisin est meilleur, on le remplace
 				if (scoreCourant > scoreVois) {
@@ -166,9 +165,7 @@ public class StrategiePersonnage {
 	 * @return Le score de la potion passée en paramètre, ou -5000 ou -4000 en cas de problème dans le calcul.
 	 */
 	private int calculScorePopo(int popo) {
-		// TODO : Prise en compte des popo de TP. Leur donner un score moyen.
-		
-		
+
 		// Score de la potion
 		int scorePopo = -5000;
 		
@@ -180,15 +177,22 @@ public class StrategiePersonnage {
 			int viePerso = console.getPersonnage().getCaract(Caracteristique.VIE);
 			int forcePerso = console.getPersonnage().getCaract(Caracteristique.FORCE);
 			int initPerso = console.getPersonnage().getCaract(Caracteristique.INITIATIVE);
+			int defensePerso = console.getPersonnage().getCaract(Caracteristique.DEFENSE);
 			
 			// Récupérations des caractéristiques de la popo
 			int viePopo = arene.caractFromRef(popo, Caracteristique.VIE);
 			int forcePopo = arene.caractFromRef(popo, Caracteristique.FORCE);
-			int initPopo = arene.caractFromRef(popo, Caracteristique.INITIATIVE) / 2;
+			int initPopo = arene.caractFromRef(popo, Caracteristique.INITIATIVE);
+			int defensePopo = arene.caractFromRef(popo, Caracteristique.DEFENSE);
 			
 			// Si la popo peut tuer, on ne la prend surtout pas !
 			if (viePopo * -1 >= viePerso)
 				return scorePopo;
+			
+			// Si la popo est une potion de TP, on lui donne une valeur correcte mais sans plus.
+			if (forcePopo == initPopo && initPopo == defensePopo 
+					&& defensePopo == viePopo && viePopo == 0)
+				return 30;
 			
 			scorePopo = 0;
 
@@ -203,16 +207,16 @@ public class StrategiePersonnage {
 				
 				// On choisit la meilleure en fonction du ratio de combat				
 				if (ratio < 0.9) {	// Il y a plus d'initiative que de force...
-					scorePopo += forcePopo;
-					scorePopo += initPopo * 2;
+					scorePopo += forcePopo * 2;
+					scorePopo += initPopo;
 					
 				} else if (ratio < 1.2) { // Quantités de force et d'initiative équitables
 					scorePopo += forcePopo;
 					scorePopo += initPopo;
 					
 				} else { // Il y a plus de force que d'initiative...
-					scorePopo += forcePopo * 2;
-					scorePopo += initPopo;
+					scorePopo += forcePopo;
+					scorePopo += initPopo * 2;
 				}
 				
 			} else if (viePerso > 40) {
@@ -237,7 +241,7 @@ public class StrategiePersonnage {
 			} else { 
 				// Le perso va mal, donc
 				// on met la priorité sur la régen
-				scorePopo = viePopo * 4;
+				scorePopo = (viePopo <= 0) ? -100 : (viePopo * 4);
 				
 				// On choisit la meilleure en fonction du ratio de combat				
 				if (ratio < 0.95) {	// Il y a plus d'initiative que de force...
@@ -254,13 +258,19 @@ public class StrategiePersonnage {
 				}
 			}
 			
+			// Si la défense est faible, on favorise la défense
+			if (defensePerso <= 20)
+				scorePopo += defensePopo * 3;
+			else
+				scorePopo += defensePopo * 2;
+			
 			// Si le perso est assez mal, on va favoriser les popo
 			if (viePerso < 50)
-				scorePopo += (scorePopo / 2);
+				scorePopo *= 1.5;
 			
 			// Si le perso est vraiment mal, on ne se bat pas
 			if (viePerso < 25)
-				scorePopo += (scorePopo / 2);
+				scorePopo *= 1.5;
 			
 			
 		} catch (Exception e) {
@@ -294,6 +304,7 @@ public class StrategiePersonnage {
 			int vieMonPerso = console.getPersonnage().getCaract(Caracteristique.VIE);
 			int forceMonPerso = console.getPersonnage().getCaract(Caracteristique.FORCE);
 			int initMonPerso = console.getPersonnage().getCaract(Caracteristique.INITIATIVE);
+			int defenseMonPerso = console.getPersonnage().getCaract(Caracteristique.DEFENSE);
 			
 			// Récupérations des caractéristiques de la popo
 			int viePerso = arene.caractFromRef(perso, Caracteristique.VIE);
