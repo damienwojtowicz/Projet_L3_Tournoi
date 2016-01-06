@@ -358,7 +358,7 @@ public class StrategiePersonnage {
 			MemoirePersonnage souvenir = memoireClervoyance.get(perso);
 			
 			// Calcul du score qualitatif du personnage
-			scorePerso = calculScorePersoQualitatif(perso);
+			
 			
 			
 			if (vieMonPerso > 75) { 
@@ -445,6 +445,18 @@ public class StrategiePersonnage {
 				scorePerso *= 0.7;
 			else if (vieVoisin < 45)
 				scorePerso *= 1.3;
+			
+			// Bonus/Malus en fonction de notre initiative
+			if (initMonPerso > 165)
+				scorePerso *= 1.1;
+			else if (initMonPerso < 35)
+				scorePerso *= 0.9;
+			
+			// Bonus/Malus en fonction de notre défense
+			if (defenseMonPerso > 35)
+				scorePerso *= 1.2;
+			else if (initMonPerso < 15)
+				scorePerso *= 0.8;
 			
 			// Si on est assez mal, on va éviter le combat
 			if (vieMonPerso < 50)
