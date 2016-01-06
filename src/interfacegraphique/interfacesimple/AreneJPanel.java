@@ -73,6 +73,11 @@ public class AreneJPanel extends JPanel {
 	 * Vrai si le compte a rebours a demarre.
 	 */
 	private boolean compteARebours = false;
+	
+	/**
+	 * Offset pour dessiner le carre
+	 */
+	private int offset;
 
 	/**
 	 * Cree un panel affichant l'arene.
@@ -105,6 +110,21 @@ public class AreneJPanel extends JPanel {
 	@Override
 	public void paintComponent(Graphics g) {
 		Rectangle rect = this.getBounds();
+
+		int witdthBorder = (Constantes.XMAX_ARENE - Constantes.XMIN_ARENE - (2*offset));
+		int heightBorder = (Constantes.YMAX_ARENE - Constantes.YMIN_ARENE - (2*offset));
+		
+		// création des coins sup. gauche et inf. droit
+		Point pMin = new Point((Constantes.XMIN_ARENE + offset),(Constantes.YMIN_ARENE + offset));
+		Point pMax = new Point(pMin.x + witdthBorder, pMin.y + heightBorder);
+		
+		// transformation en coordonnées écran
+		pMin = getPositionReelle(new Point(pMin));
+		pMax = getPositionReelle(new Point(pMax));
+
+	
+		Rectangle frame = new Rectangle (pMin.x, pMin.y, pMax.x - pMin.x, pMax.y - pMin.y);
+
 		
 		// si la connexion est en cours ou il y a une erreur
 		if (message != null) {
@@ -112,8 +132,13 @@ public class AreneJPanel extends JPanel {
 			g.setFont(new Font("Arial",Font.BOLD,20));
 			g.drawString(message, 20, rect.height - 20);
 			message = null;
-			g.setFont(of);				
+			g.setFont(of);
 		}
+		
+		
+		// dessiner la bordure
+		g.drawRect(frame.x, frame.y, frame.width, frame.height);
+		
 		
 		// dessiner les elements
 		for(VuePotion vuePotion : potions) {
@@ -329,9 +354,10 @@ public class AreneJPanel extends JPanel {
 	 * @param personnages liste des personnages a afficher
 	 * @param potions liste des potions a afficher
 	 */
-	public void setVues(List<VuePersonnage> personnages, List<VuePotion> potions) {
+	public void setVues(List<VuePersonnage> personnages, List<VuePotion> potions, int offset) {
 		this.potions = potions;
 		this.personnages = personnages;
+		this.offset = offset;
 	}
 
 	/**

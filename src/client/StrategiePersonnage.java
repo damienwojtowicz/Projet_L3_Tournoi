@@ -6,6 +6,7 @@ import java.rmi.RemoteException;
 import java.util.HashMap;
 import java.util.Map;
 
+import client.controle.Console;
 import logger.LoggerProjet;
 import serveur.IArene;
 import serveur.element.Caracteristique;
@@ -14,7 +15,6 @@ import serveur.element.Personnage;
 import serveur.element.Potion;
 import utilitaires.Calculs;
 import utilitaires.Constantes;
-import client.controle.Console;
 
 /**
  * Strategie d'un personnage. 
@@ -26,6 +26,10 @@ public class StrategiePersonnage {
 	 * (l'arene).
 	 */
 	protected Console console;
+	
+	protected StrategiePersonnage(LoggerProjet logger){
+		logger.info("Lanceur", "Creation de la console...");
+	}
 
 	/**
 	 * Cree un personnage, la console associe et sa strategie.
@@ -41,9 +45,8 @@ public class StrategiePersonnage {
 	public StrategiePersonnage(String ipArene, int port, String ipConsole, 
 			String nom, String groupe, HashMap<Caracteristique, Integer> caracts,
 			int nbTours, Point position, LoggerProjet logger) {
-		
-		logger.info("Lanceur", "Creation de la console...");
-		
+		this(logger);
+
 		try {
 			console = new Console(ipArene, port, ipConsole, this, 
 					new Personnage(nom, groupe, caracts), 
@@ -98,12 +101,13 @@ public class StrategiePersonnage {
 			
 			// Recherche du voisin
 			for (Map.Entry<Integer, Point> e : voisins.entrySet()) {
-				Element elt = arene.elementFromRef(e.getKey());
 				
-				if (elt instanceof Potion)
-					scoreCourant = calculScorePopo((Potion) elt);
-				else if (elt instanceof Personnage)
-					scoreCourant = calculScorePerso((Personnage) elt);
+				if (arene.estPotionFromRef(e.getKey()))
+					scoreCourant = calculScorePopo(e.getKey());
+				
+				else if (arene.estPersonnageFromRef(e.getKey()))
+					scoreCourant = calculScorePerso(e.getKey());
+				
 				else
 					scoreCourant = 0;
 				
@@ -122,22 +126,21 @@ public class StrategiePersonnage {
 				arene.deplace(refRMI, 0);
 				
 			} if (scoreVois <= -200) { // Pas de voisin intéressant, donc on erre...
-				console.setPhrase("Pas de voisin sympa (" + arene.elementFromRef(refVois).getNom() + "-" + arene.elementFromRef(refVois).getGroupe()  + " à " + scoreVois + ")");
+				console.setPhrase("Pas de voisin sympa (" + arene.nomFromRef(refVois) + "-" + refVois + " à " + scoreVois + ")");
 				arene.deplace(refRMI, 0); 
 			
 			} else {
-				Element eltVois = arene.elementFromRef(refVois);
 				
 				if(distVois <= Constantes.DISTANCE_MIN_INTERACTION) { // Le voisin est à portée...
 					
-					if (eltVois instanceof Potion) {
+					if (arene.estPotionFromRef(refVois)) {
 						// Si c'est une popo, on la boit !
 						console.setPhrase("Je bois ma potion cible !");
 						arene.ramassePotion(refRMI, refVois);
 					
-					} else if (eltVois instanceof Personnage) {
+					} else if (arene.estPersonnageFromRef(refVois)) {
 						// Si c'est un perso, on attaque !
-						console.setPhrase("En garde, " + eltVois.getNom() + " du " + eltVois.getNomGroupe() + " !");
+						console.setPhrase("En garde, " + arene.nomFromRef(refVois) + "-" + refVois + " !");
 						arene.lanceAttaque(refRMI, refVois);
 						
 					} else {
@@ -147,7 +150,7 @@ public class StrategiePersonnage {
 					
 				} else { 
 					// Sinon, on se déplace vers lui
-					console.setPhrase("Je vais vers mon voisin " + eltVois.getNom() + "-" + eltVois.getGroupe()  + " à " + scoreVois);
+					console.setPhrase("Je vais vers mon voisin " + arene.nomFromRef(refVois) + "-" + refVois + " à " + scoreVois);
 					arene.deplace(refRMI, refVois);
 				}
 			}
@@ -162,21 +165,26 @@ public class StrategiePersonnage {
 	 * @param popo La potion dont on veut calculer le score
 	 * @return Le score de la potion passée en paramètre, ou -5000 ou -4000 en cas de problème dans le calcul.
 	 */
-	private int calculScorePopo(Potion popo) {
+	private int calculScorePopo(int popo) {
+		// TODO : Prise en compte des popo de TP. Leur donner un score moyen.
+		
 		
 		// Score de la potion
 		int scorePopo = -5000;
 		
 		try {
+			// Récupération de l'arène
+			IArene arene = console.getArene();
+			
 			// Récupérations des caractéristiques du personnage
 			int viePerso = console.getPersonnage().getCaract(Caracteristique.VIE);
 			int forcePerso = console.getPersonnage().getCaract(Caracteristique.FORCE);
 			int initPerso = console.getPersonnage().getCaract(Caracteristique.INITIATIVE);
 			
 			// Récupérations des caractéristiques de la popo
-			int viePopo = popo.getCaract(Caracteristique.VIE);
-			int forcePopo = popo.getCaract(Caracteristique.FORCE);
-			int initPopo = popo.getCaract(Caracteristique.INITIATIVE) / 2;
+			int viePopo = arene.caractFromRef(popo, Caracteristique.VIE);
+			int forcePopo = arene.caractFromRef(popo, Caracteristique.FORCE);
+			int initPopo = arene.caractFromRef(popo, Caracteristique.INITIATIVE) / 2;
 			
 			// Si la popo peut tuer, on ne la prend surtout pas !
 			if (viePopo * -1 >= viePerso)
@@ -195,16 +203,16 @@ public class StrategiePersonnage {
 				
 				// On choisit la meilleure en fonction du ratio de combat				
 				if (ratio < 0.9) {	// Il y a plus d'initiative que de force...
-					scorePopo += forcePopo * 2;
-					scorePopo += initPopo;
+					scorePopo += forcePopo;
+					scorePopo += initPopo * 2;
 					
 				} else if (ratio < 1.2) { // Quantités de force et d'initiative équitables
 					scorePopo += forcePopo;
 					scorePopo += initPopo;
 					
-				} else { // Il y a plus d'initiative que de force...
-					scorePopo += forcePopo;
-					scorePopo += initPopo * 2;
+				} else { // Il y a plus de force que d'initiative...
+					scorePopo += forcePopo * 2;
+					scorePopo += initPopo;
 				}
 				
 			} else if (viePerso > 40) {
@@ -221,7 +229,7 @@ public class StrategiePersonnage {
 					scorePopo += forcePopo;
 					scorePopo += initPopo;
 					
-				} else { // Il y a plus d'initiative que de force...
+				} else { // Il y a plus de force que d'initiative...
 					scorePopo += forcePopo < 0 ? forcePopo : (forcePopo / 2);
 					scorePopo += initPopo ;
 				}
@@ -262,7 +270,7 @@ public class StrategiePersonnage {
 		
 		return scorePopo;
 	}
-	
+
 
 	/**
 	 * Calcule le score d'un personnage en fonction de ses caractéristiques et de l'état du personnage courant,
@@ -271,21 +279,26 @@ public class StrategiePersonnage {
 	 * @param perso Le personnage dont on veut calculer le score
 	 * @return Le score du personnage passée en paramètre, ou -5000 ou -4000 en cas de problème dans le calcul.
 	 */
-	private int calculScorePerso(Personnage perso) {
+	private int calculScorePerso(int perso) {
+
+		// TODO : Faire le calcul !!
 		
-		// Score du perso
+		// Score du personnage
 		int scorePerso = -5000;
 		
 		try {
+			// Récupération de l'arène
+			IArene arene = console.getArene();
+			
 			// Récupérations des caractéristiques du personnage
 			int vieMonPerso = console.getPersonnage().getCaract(Caracteristique.VIE);
 			int forceMonPerso = console.getPersonnage().getCaract(Caracteristique.FORCE);
 			int initMonPerso = console.getPersonnage().getCaract(Caracteristique.INITIATIVE);
 			
-			// Récupérations des caractéristiques du perso
-			int viePerso = perso.getCaract(Caracteristique.VIE);
-			int forcePerso = perso.getCaract(Caracteristique.FORCE);
-			int initPerso = perso.getCaract(Caracteristique.INITIATIVE);
+			// Récupérations des caractéristiques de la popo
+			int viePerso = arene.caractFromRef(perso, Caracteristique.VIE);
+			int forcePerso = arene.caractFromRef(perso, Caracteristique.FORCE);
+			int initPerso = arene.caractFromRef(perso, Caracteristique.INITIATIVE) / 2;
 			
 			
 			if (vieMonPerso > 75) { 

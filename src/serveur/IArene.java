@@ -6,6 +6,7 @@ import java.rmi.RemoteException;
 import java.util.HashMap;
 
 import client.controle.IConsole;
+import serveur.element.Caracteristique;
 import serveur.element.Element;
 import serveur.element.Personnage;
 import serveur.element.Potion;
@@ -100,14 +101,53 @@ public interface IArene extends Remote {
 	public HashMap<Integer, Point> getVoisins(int refRMI) throws RemoteException;
 
 	/**
-	 * Permet de recuperer une copie de l'element correspondant a la reference 
-	 * RMI.
-	 * @param refRMI reference RMI
-	 * @return copie de l'element correspondant a la reference RMI donnee
+	 * Permet de recuperer le nom d'un element.
+	 * 
+	 * @param refRMI reference de l'element
+	 * @return nom du personnage ou de la potion
 	 * @throws RemoteException
 	 */
-	public Element elementFromRef(int refRMI) throws RemoteException;
-
+	public String nomFromRef(int refRMI) throws RemoteException;
+	
+	/**
+	 * Permet de verifier si c'est une potion
+	 * 
+	 * @param refRMI reference de l'element
+	 * @return vrai si l'element est une potion
+	 * @throws RemoteException
+	 */
+	public boolean estPotionFromRef(int refRMI) throws RemoteException;
+	
+	/**
+	 * Permet de verifier si c'est un monstre
+	 * 
+	 * @param refRMI reference de l'element
+	 * @return vrai si l'element est un monstre
+	 * @throws RemoteException
+	 */
+	public boolean estMonstreFromRef(int refRMI) throws RemoteException;
+	
+	/**
+	 * Permet de verifier si c'est un personnage
+	 * 
+	 * @param refRMI reference de l'element
+	 * @return vrai si l'element est un personnage
+	 * @throws RemoteException
+	 */
+	public boolean estPersonnageFromRef(int refRMI) throws RemoteException;
+	
+	/**
+	 * Permet de recuperer une caracteristique d'un element
+	 * 
+	 * @param refRMI reference de l'element
+	 * @param caract caracteristique a recuperer
+	 * @return si l'element est une potion ou un monstre, retourne la caracteristique donnee.
+	 *         si l'element est un personnage, retourne la vie, ou 0 si une autre
+	 *         caracteristique est demandee
+	 * @throws RemoteException
+	 */
+	public int caractFromRef(int refRMI, Caracteristique caract) throws RemoteException;
+	
 	/**
 	 * Permet de recuperer une copie de l'element correspondant a la console.
 	 * @param console console
@@ -115,14 +155,7 @@ public interface IArene extends Remote {
 	 * @throws RemoteException
 	 */
 	public Element elementFromConsole(IConsole console) throws RemoteException;
-	
-	/**
-	 * Renvoie la vue correspondant a la reference RMI donnee.
-	 * @param refRMI reference RMI
-	 * @return vue correspondante
-	 */
-	public VueElement<?> vueFromRef(int refRMI) throws RemoteException;
-	
+
 	/**
 	 * Renvoie la vue correspondant a la console donnee.
 	 * @param console console
@@ -162,6 +195,8 @@ public interface IArene extends Remote {
 	 * @throws RemoteException
 	 */
 	public boolean ramassePotion(int refRMI, int refPotion) throws RemoteException;
+	
+	
 	
 	/**
 	 * Execute un duel entre le personnage correspondant a la console donnee 

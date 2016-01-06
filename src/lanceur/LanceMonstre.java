@@ -3,11 +3,9 @@ package lanceur;
 import java.awt.Point;
 import java.io.IOException;
 import java.net.InetAddress;
-import java.util.HashMap;
 
-import client.StrategiePersonnage;
+import client.StrategieMonstre;
 import logger.LoggerProjet;
-import serveur.element.Caracteristique;
 import utilitaires.Calculs;
 import utilitaires.Constantes;
 
@@ -15,15 +13,11 @@ import utilitaires.Constantes;
  * Lance une Console avec un Element sur l'Arene. 
  * A lancer apres le serveur, eventuellement plusieurs fois.
  */
-public class LancePersonnage {
+public class LanceMonstre {
 	
-	private static String usage = "USAGE : java " + LancePersonnage.class.getName() + " [ port [ ipArene ] ]";
+	private static String usage = "USAGE : java " + LanceMonstre.class.getName() + " [ port [ ipArene ] ]";
 
 	public static void main(String[] args) {
-		String nom = "Truc";
-		
-		// TODO remplacer la ligne suivante par votre numero de groupe
-		String groupe = "G" + Calculs.nombreAleatoire(0,99); 
 		
 		// nombre de tours pour ce personnage avant d'etre deconnecte 
 		// (30 minutes par defaut)
@@ -57,7 +51,7 @@ public class LancePersonnage {
 		// creation du logger
 		LoggerProjet logger = null;
 		try {
-			logger = new LoggerProjet(true, "personnage_" + nom + groupe);
+			logger = new LoggerProjet(true, "monstre");
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.exit(ErreurLancement.suivant);
@@ -67,15 +61,12 @@ public class LancePersonnage {
 		try {
 			String ipConsole = InetAddress.getLocalHost().getHostAddress();
 			
-			logger.info("Lanceur", "Creation du personnage...");
-			
-			// caracteristiques du personnage
-			HashMap<Caracteristique, Integer> caracts = new HashMap<Caracteristique, Integer>();
+			logger.info("Lanceur", "Creation du monstre...");
 			
 			Point position = Calculs.positionAleatoireArene();
 			
-			new StrategiePersonnage(ipArene, port, ipConsole, nom, groupe, caracts, nbTours, position, logger);
-			logger.info("Lanceur", "Creation du personnage reussie");
+			new StrategieMonstre(ipArene, port, ipConsole, nbTours, position, logger);
+			logger.info("Lanceur", "Creation du monstre reussie");
 			
 		} catch (Exception e) {
 			logger.severe("Lanceur", "Erreur lancement :\n" + e.getCause());

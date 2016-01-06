@@ -82,6 +82,16 @@ public class Constantes {
 	public static final int YMAX_ARENE = 100;
 	
 	/**
+	 * Taille minimum de l'arene
+	 */
+	public static final int MINIMUM_ARENE = 50;
+	
+	/**
+	 * Intervalle de reduction
+	 */
+	public static final int INTERVALLE_OFFSET = 120000;
+	
+	/**
 	 * Couleur sur l'IHM pour les personnages qui sont morts.
 	 */
 	public static final Color COULEUR_MORTS = new Color(112, 112, 112);

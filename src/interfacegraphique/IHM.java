@@ -214,7 +214,7 @@ public class IHM extends JFrame implements Runnable {
 
 			public void actionPerformed(ActionEvent ae) {
 				JOptionPane.showMessageDialog(null,
-						"Projet de programmation L3 - Université Paul Sabatier\n" + 
+						"Projet de programmation L3 - Universite Paul Sabatier\n" + 
 						"Repris par Clement Chaumel, Valentin Chevalier, Christophe Claustre\n" +
 						"lors du TER L3 de 2014/2015\n" +
 						"Modifie pour le projet de programmation 2015/2016", "A propos",
@@ -286,7 +286,7 @@ public class IHM extends JFrame implements Runnable {
 				List<VuePotion> potions = arene.getPotions();
 
 				infosPanel.setElements(personnages, personnagesMorts, potions);
-				arenePanel.setVues(personnages, potions);
+				arenePanel.setVues(personnages, potions, arene.getOffset());
 
 				// MAJ du timer
 				int tempsRestant = arene.getNbToursRestants();

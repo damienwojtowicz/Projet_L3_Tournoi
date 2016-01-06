@@ -49,7 +49,7 @@ public class Ramassage extends Interaction<VuePotion> {
 					arene.setPhrase(attaquant.getRefRMI(), "Je me suis empoisonne, je meurs ");
 					logs(Level.INFO, Constantes.nomRaccourciClient(attaquant) + " vient de boire un poison... Mort >_<");
 				}
-
+				
 				// suppression de la potion
 				arene.ejectePotion(defenseur.getRefRMI());
 				

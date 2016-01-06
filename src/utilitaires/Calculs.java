@@ -15,6 +15,14 @@ import serveur.element.Caracteristique;
  * elements voisins...).
  */
 public class Calculs {
+	
+	/**
+	 * Offset pour retrouver l'arene init.
+	 */
+	public static int OFFSET_ARENE = 0;
+	
+	public static int getOffset() {return OFFSET_ARENE;}
+	public static void setOffset(int val) {OFFSET_ARENE = val;}
 
 	/**
 	 * Renvoie la distance de Chebyshev entre deux points.
@@ -51,8 +59,8 @@ public class Calculs {
 	 * @return vrai si le point est dans les limites de l'arene, faux sinon
 	 */
 	public static boolean estDansArene(Point p) {
-		return XMIN_ARENE <= p.x && p.x <= XMAX_ARENE &&
-				YMIN_ARENE <= p.y && p.y <= YMAX_ARENE;
+		return (XMIN_ARENE + OFFSET_ARENE <= p.x) && (p.x <= XMAX_ARENE - OFFSET_ARENE) &&
+				(YMIN_ARENE + OFFSET_ARENE <= p.y) && (p.y <= YMAX_ARENE - OFFSET_ARENE);
 	}
 	
 	/** 
@@ -162,8 +170,8 @@ public class Calculs {
 	 */
 	public static Point positionAleatoireArene() {
 		return new Point(
-				Calculs.nombreAleatoire(XMIN_ARENE, XMAX_ARENE), 
-				Calculs.nombreAleatoire(YMIN_ARENE, YMAX_ARENE));
+				Calculs.nombreAleatoire(XMIN_ARENE + OFFSET_ARENE, XMAX_ARENE - OFFSET_ARENE), 
+				Calculs.nombreAleatoire(YMIN_ARENE + OFFSET_ARENE, YMAX_ARENE - OFFSET_ARENE));
 	}
 
 	/**
@@ -188,8 +196,8 @@ public class Calculs {
 	}
 
 	public static Point restreintPositionArene(Point position) {		
-		return new Point(restreintNombre(XMIN_ARENE, XMAX_ARENE, position.x), 
-				restreintNombre(YMIN_ARENE, YMAX_ARENE, position.y));
+		return new Point(restreintNombre(XMIN_ARENE + OFFSET_ARENE, XMAX_ARENE - OFFSET_ARENE, position.x), 
+				restreintNombre(YMIN_ARENE + OFFSET_ARENE, YMAX_ARENE - OFFSET_ARENE, position.y));
 	}
 
 	/**
