@@ -47,12 +47,12 @@ public class IHM extends JFrame implements Runnable {
 	/**
 	 * Adresse IP du serveur. 
 	 */
-	private String ipArene;
+	protected String ipArene;
 
 	/**
 	 * Port de communication avec l'arene. 
 	 */
-	private int port;
+	protected int port;
 	
 	/**
 	 * Etats de l'interface : initialisation ou en jeu.

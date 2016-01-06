@@ -19,9 +19,11 @@ import javax.swing.Timer;
 
 import interfacegraphique.interfacetournoi.ControleJPanel;
 import interfacegraphique.interfacetournoi.FenetreCreationPotion;
+import lanceur.LanceMonstre;
 import logger.LoggerProjet;
 import serveur.element.Caracteristique;
 import serveur.element.Potion;
+import serveur.element.PotionTP;
 import serveur.vuelement.VueElement;
 
 /**
@@ -229,6 +231,38 @@ public class IHMTournoi extends IHM {
 			} catch (RemoteException e) {
 				erreurConnexion(e);
 			}
+		}
+	}
+	
+	/**
+	 * Lance une potion de teleportation sur le serveur.
+	 * @param nom nom de la potion
+	 * @param ht caracteristiques de la potion
+	 * @param position position de la potion
+	 */
+	public void lancePotionTeleportation(String nom, Point position) {
+		if (!motDePasseOK) {
+			demandeMotDePasse();
+		} else {
+			try {
+				arene.lancePotionTP(new PotionTP(nom, "Arene"), position, motDePasse);
+			} catch (RemoteException e) {
+				erreurConnexion(e);
+			}
+		}
+	}
+	
+	/**
+	 * Lance un monstre sur le serveur.
+	 * @param nom nom de la potion
+	 * @param ht caracteristiques de la potion
+	 * @param position position de la potion
+	 */
+	public void lanceMonstre(String nom, Point position) {
+		if (!motDePasseOK) {
+			demandeMotDePasse();
+		} else {
+			LanceMonstre.main(new String[]{port + "", ipArene, position.x + "", position.y + ""});
 		}
 	}
 	

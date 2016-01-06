@@ -86,6 +86,21 @@ public enum Caracteristique {
 	}
 
 	/**
+	 * Cree un map de caracteristiques contenant toutes les caracteristiques 
+	 * avec une valeur de 0. 
+	 * @return map caracteristique/valeur contenant les valeurs par defaut
+	 */
+	public static HashMap<Caracteristique,Integer> mapCaracteristiquesNul() {
+		HashMap<Caracteristique, Integer> caractsValues = new HashMap<Caracteristique, Integer>();
+		
+		for (Caracteristique caract : values()) {
+			caractsValues.put(caract, 0);
+		}
+		
+		return caractsValues;
+	}
+
+	/**
 	 * Compte le nombre total de caracteristiques.
 	 * @return nombre de caracteristiques
 	 */

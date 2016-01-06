@@ -71,7 +71,7 @@ public class ControleJPanel extends JPanel {
 		ejecterButton = new JButton("Ejecter l'element");
 		detaillerButton = new JButton("Vue detaillee");
 		lancerPartieButton = new JButton("Lancer la partie");
-		ajouterPotionButton = new JButton("Ajouter une potion");
+		ajouterPotionButton = new JButton("Ajouter un objet");
 		deverrouillerButton = new JButton("Deverouiller");	
 		
 		// listeners
@@ -111,8 +111,8 @@ public class ControleJPanel extends JPanel {
 				
 		this.add(detaillerButton);
 		this.add(ejecterButton);
-		this.add(lancerPartieButton);
 		this.add(ajouterPotionButton);
+		this.add(lancerPartieButton);
 		this.add(deverrouillerButton);
 		
 		verouille();

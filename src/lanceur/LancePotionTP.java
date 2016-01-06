@@ -1,11 +1,9 @@
 package lanceur;
 
 import java.io.IOException;
-import java.util.HashMap;
 
 import logger.LoggerProjet;
 import serveur.IArene;
-import serveur.element.Caracteristique;
 import serveur.element.PotionTP;
 import utilitaires.Calculs;
 import utilitaires.Constantes;
@@ -59,16 +57,8 @@ public class LancePotionTP {
 
 			logger.info("Lanceur", "Lancement de la potion de TP sur le serveur...");
 			
-			// caracteristiques de la potion
-			HashMap<Caracteristique, Integer> caractsPotion = new HashMap<Caracteristique, Integer>();
-			
-			caractsPotion.put(Caracteristique.VIE, 0);
-			caractsPotion.put(Caracteristique.FORCE, 0);
-			caractsPotion.put(Caracteristique.INITIATIVE,0);
-			caractsPotion.put(Caracteristique.DEFENSE, 0);
-			
 			// ajout de la potion
-			arene.ajoutePotion(new PotionTP(nom, groupe, caractsPotion), Calculs.positionAleatoireArene());
+			arene.ajoutePotion(new PotionTP(nom, groupe), Calculs.positionAleatoireArene());
 			logger.info("Lanceur", "Lancement de la potion TP reussi");
 			
 		} catch (Exception e) {

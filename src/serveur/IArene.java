@@ -10,6 +10,7 @@ import serveur.element.Caracteristique;
 import serveur.element.Element;
 import serveur.element.Personnage;
 import serveur.element.Potion;
+import serveur.element.PotionTP;
 import serveur.vuelement.VueElement;
 
 /**
@@ -211,10 +212,6 @@ public interface IArene extends Remote {
 	 */
 	public boolean lanceAttaque(int refRMI, int refAdv) throws RemoteException;
 	
-
-	public HashMap<Caracteristique,Integer> lanceClairvoyance(int refRMI, int refRMIAdv) throws RemoteException;
-	public boolean lanceAutoSoin(int refRMI) throws RemoteException;
-	
 	/**
 	 * Deplace le personnage correspondant a la console donne vers l'element 
 	 * correspondant a la reference RMI cible.
@@ -241,7 +238,22 @@ public interface IArene extends Remote {
 	public boolean deplace(int refRMI, Point objectif) throws RemoteException;
 	
 	
+	/**
+	 * Soigne le personnage passe en parametre
+	 * @param refRMI reference RMI du personnage se soignant
+	 * @return vrai si l'action a bien eu lieu, faux sinon
+	 * @throws RemoteException
+	 */
+	public boolean lanceAutoSoin(int refRMI) throws RemoteException;
 
+	/**
+	 * 
+	 * @param refRMI reference RMI du personnage executant l'action
+	 * @param refRMIAdv reference RMI du personnage dont on veut les caracteristiques
+	 * @return hashmap avec les caracteristiques et leur valeur
+	 * @throws RemoteException
+	 */
+	public HashMap<Caracteristique,Integer> lanceClairvoyance(int refRMI, int refRMIAdv) throws RemoteException;
 	
 
 	/**************************************************************************
@@ -279,6 +291,16 @@ public interface IArene extends Remote {
 	 * @throws RemoteException
 	 */
 	public void lancePotion(Potion potion, Point position, String motDePasse) throws RemoteException;
+
+	/**
+	 * Ajoute une potion de teleportation dans l'arene a n'importe quel moment 
+	 * en mode tournoi.
+	 * @param potionTP potion de teleportation
+	 * @param position position de la potion
+	 * @param motDePasse mot de passe administrateur
+	 * @throws RemoteException
+	 */
+	public void lancePotionTP(PotionTP potion, Point position, String motDePasse) throws RemoteException;
 	
 }
 
