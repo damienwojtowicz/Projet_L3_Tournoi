@@ -142,7 +142,7 @@ public class StrategiePersonnage {
 
 				// ...et avec les minions.
 				else if (arene.estMonstreFromRef(e.getKey()))
-					scoreCourant = enPLS ? -1000 : calculScorePerso(e.getKey());
+					scoreCourant = enPLS ? -1000 : calculScoreMinion(e.getKey());
 				
 				// On ignore les trucs inconnus
 				else
@@ -549,87 +549,41 @@ public class StrategiePersonnage {
 	 * @param perso Le monstre dont on veut calculer le score
 	 * @return Le score du monstre passée en paramètre, ou -5000 en cas de problème dans le calcul.
 	 */
-	private int calculScoreMinion(int perso) {
+	private int calculScoreMinion(int minion) {
 
 		// Score du minion
-		int scorePerso = -5000;
+		int scoreMimi = -5000;
 		
 		try {
-			// Récupération de l'arène
-			IArene arene = console.getArene();
-			
 			// Récupérations des caractéristiques du personnage
 			int vieMonPerso = console.getPersonnage().getCaract(Caracteristique.VIE);
 			int forceMonPerso = console.getPersonnage().getCaract(Caracteristique.FORCE);
-			int initMonPerso = console.getPersonnage().getCaract(Caracteristique.INITIATIVE);
-			int defenseMonPerso = console.getPersonnage().getCaract(Caracteristique.DEFENSE);
 			
-			// Récupération de la vie du voisin
-			int vieVoisin = arene.caractFromRef(perso, Caracteristique.VIE);
-			MemoirePersonnage souvenirClervoyance = MemoirePersonnage.getEntreeMemoire(memoireClervoyance, perso);
-			
-			
-			// TODO : Calcul du score du minion (MAX entre 120 et 220)
-			/*
-			 * Calcul du score sans modificateurs
-			 */
-			
-			// Nombre de coups pour tuer l'adversaire
-			int meilleurNbCoups = 0;
-			int pireNbCoups = 0;
-			int vieVoisinTmp = vieVoisin;
-			int forceTmp = souvenirClervoyance.getForcePerso();
-			
-			// Calcul du meilleur cas possible en combat (adversaire sans défenses et passif)
-			do {
-				vieVoisinTmp -= forceMonPerso;
-				meilleurNbCoups ++;
-			} while (vieVoisinTmp > 0);
-			
-			// Calcul du meilleur cas possible en combat (adversaire défendu qui se régen)
-			vieVoisinTmp = vieVoisin;
-			do {
-				vieVoisinTmp -= forceMonPerso*(1 - forceTmp/100) - 2;
-				forceTmp = forceTmp < 10 ? 0 : forceTmp - 10;
-				pireNbCoups ++;
-			} while (vieVoisinTmp > 0);
-			
-			// Score du personnage
-			scorePerso = (-80*pireNbCoups+280)/2 + (-80*meilleurNbCoups+280)/2;
+			// Score de base du minion
+			scoreMimi = forceMonPerso - 10 > 0 ? 100: 10;
 			
 			/*
 			 * Application des modificateurs
 			 */
 			
-			// Bonus/Malus en fonction de la vie de l'adversaire
-			if (vieVoisin > 75)
-				scorePerso *= 0.7;
-			else if (vieVoisin < 45)
-				scorePerso *= 1.3;
-			
-			// Bonus/Malus en fonction du ratio d'initiative
-			scorePerso *= initMonPerso/souvenirClervoyance.getInitPerso() > 1 ? 1.1 : 0.9;
+			// Bonus si on a besoin de force
+			if (forceMonPerso < 60)
+				scoreMimi *= 1.6;
 
-			// Bonus/Malus en fonction du ratio de force
-			scorePerso *= forceMonPerso/souvenirClervoyance.getForcePerso() > 1 ? 1.15 : 0.95;
-			
-			// Bonus/Malus en fonction du ratio de défense
-			scorePerso *= defenseMonPerso/souvenirClervoyance.getDefensePerso() > 1 ? 1.15 : 0.95;
-			
-			// Si on est assez mal, on va éviter le combat
-			if (vieMonPerso < 50)
-				scorePerso -= (scorePerso / 3);
-			
-			// Si on perso est vraiment mal, on va éviter encore plus le combat
-			if (vieMonPerso < 25)
-				scorePerso -= (scorePerso / 2);
+			// Bonus/Malus en fonction de notre vie
+			if (vieMonPerso > 75)
+				scoreMimi *= 0.8;
+			else if (vieMonPerso < 25)
+				scoreMimi *= 0.2;
+			else if (vieMonPerso > 40)
+				scoreMimi *= 1.3;
 			
 			
 		} catch (Exception e) {
 			e.printStackTrace();
-			scorePerso = -4000;
+			scoreMimi = -4000;
 		}
 		
-		return scorePerso;
+		return scoreMimi;
 	}
 }
