@@ -321,32 +321,31 @@ public class StrategiePersonnage {
 	 */
 	private int calculScorePerso(int perso) {
 		
-		
 		try {
-			// Si on a déjà observé le personnage, on fait une analyse quantitative
+			// Si on a déjà observé le personnage, on fait une analyse complexe
 			if (MemoirePersonnage.dansMemoire(memoireClervoyance, perso)) {
 				int depuisCelervoyance = console.getArene().getTour() - memoireClervoyance.get(perso).getTourClairvoyance();
 
-				// On fait une moyenne pondérée avec une analyse quantitative
-				return calculScorePersoQualitatif(perso) * depuisCelervoyance/60 
-						+ calculScorePersoQuantitatif(perso) * (60-depuisCelervoyance)/60;
+				// On fait une moyenne pondérée avec une analyse complexe
+				return calculScorePersoSimple(perso) * depuisCelervoyance/60 
+						+ calculScorePersoComplexe(perso) * (60-depuisCelervoyance)/60;
 			}
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		}
 			
-		// Sinon, on fait une analyse quantitative
-		return calculScorePersoQualitatif(perso);
+		// Sinon, on fait une analyse qulitative
+		return calculScorePersoSimple(perso);
 	}
 	
 	
 	/**
 	 * Calcule le score d'un personnage en fonction de ses caractéristiques observées
-	 * par clervoyance et de son score qualitatif.
+	 * par clervoyance et de son score simple.
 	 * @param perso Le personnage dont on veut calculer le score
 	 * @return Le score du personnage passée en paramètre, ou -5000 ou -4000 en cas de problème dans le calcul.
 	 */
-	private int calculScorePersoQuantitatif(int perso) {
+	private int calculScorePersoComplexe(int perso) {
 		
 		// Score du personnage
 		int scorePerso = -5000;
@@ -365,7 +364,7 @@ public class StrategiePersonnage {
 			int viePerso = arene.caractFromRef(perso, Caracteristique.VIE);
 			MemoirePersonnage souvenir = memoireClervoyance.get(perso);
 			
-			// Calcul du score qualitatif du personnage
+			// Calcul du score simple du personnage
 			
 			
 			
@@ -401,7 +400,7 @@ public class StrategiePersonnage {
 	 * @param perso Le personnage dont on veut calculer le score
 	 * @return Le score du personnage passée en paramètre, ou -5000 ou -4000 en cas de problème dans le calcul.
 	 */
-	private int calculScorePersoQualitatif(int perso) {
+	private int calculScorePersoSimple(int perso) {
 		
 		// Score du personnage
 		int scorePerso = -5000;
