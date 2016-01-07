@@ -2,7 +2,6 @@ package client;
 
 
 import java.awt.Point;
-import java.net.CacheResponse;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.HashMap;
