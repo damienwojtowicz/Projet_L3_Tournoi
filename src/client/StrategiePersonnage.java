@@ -27,6 +27,8 @@ public class StrategiePersonnage {
 	protected Console console;
 	
 	private static ArrayList<MemoirePersonnage> memoireClervoyance = new ArrayList();
+	private static int memoireAttaque;
+	private static int memoireTarget;
 	
 	protected StrategiePersonnage(LoggerProjet logger){
 		logger.info("Lanceur", "Creation de la console...");
@@ -115,7 +117,13 @@ public class StrategiePersonnage {
 		} else {
 			// Réf et score du voisin le plus intéressant
 			int refVois = 0;
-			int scoreVois = 0;
+			int scoreVois = -1000;
+			
+
+			// Réf et score du second voisin le plus intéressant
+			int refVois2 = 0;
+			int scoreVois2 = -1000;
+			
 			int scoreCourant;
 			
 			// Calcul de la distance avec le voisin
@@ -143,8 +151,11 @@ public class StrategiePersonnage {
 				// Modificateur de distance
 				scoreCourant -= distVois;
 				
-				// Si le voisin est une meilleure cible, on écrase l'ancien
+				// Si le voisin est une meilleure cible, on écrase les ancien
 				if (scoreCourant > scoreVois) {
+					scoreVois2 = scoreVois;
+					refVois2 = refVois;
+					
 					scoreVois = scoreCourant;
 					refVois = e.getKey();
 				}
@@ -155,8 +166,9 @@ public class StrategiePersonnage {
 			if (scoreVois <= -200) {
 			
 				// Si on est dans le rayon d'action de plusieurs personnages, on s'échappe
+				// TODO : s'échapper !
 				
-				
+				// Sinon, on erre
 				console.setPhrase("Pas de voisin sympa (" + arene.nomFromRef(refVois) + "-" + refVois + " à " + scoreVois + ")");
 				arene.deplace(refRMI, 0); 
 			
@@ -180,9 +192,26 @@ public class StrategiePersonnage {
 					}
 					
 				} else { 
-					// Sinon, on se déplace vers lui
+					// Sinon, on analyse la situation plus finement...
 					console.setPhrase("Je vais vers mon voisin " + arene.nomFromRef(refVois) + "-" + refVois + " à " + scoreVois);
 					arene.deplace(refRMI, refVois);
+					
+					// TODO : Déplacement vers perso
+					/*
+					 * Si target sur perso :
+					 * 		Clervoyance si pas fait depuis 10 tours
+					 * 		Dépacement vers lui sinon
+					 * 
+					 * Si perso à portée possible au prochain tour
+					 * 		Si clervoyance pas faite depuis 5 tours
+					 * 			Clervoyance
+					 * 		Sinon si son initiative >= la notre OU sa force - notre défense > notre vie * 1.2
+					 * 			Déplacment en bordure de sa zone d'action
+					 * 		Sinon
+					 * 			Déplacement au CàC
+					 * Sinon
+					 * 		Clervoyance
+					 */
 				}
 			}
 		}
@@ -334,65 +363,9 @@ public class StrategiePersonnage {
 			e.printStackTrace();
 		}
 			
-		// Sinon, on fait une analyse qulitative
+		// Sinon, on fait une analyse simple
 		return calculScorePersoSimple(perso);
 	}
-	
-	
-	/**
-	 * Calcule le score d'un personnage en fonction de ses caractéristiques observées
-	 * par clervoyance et de son score simple.
-	 * @param perso Le personnage dont on veut calculer le score
-	 * @return Le score du personnage passée en paramètre, ou -5000 ou -4000 en cas de problème dans le calcul.
-	 */
-	private int calculScorePersoComplexe(int perso) {
-		
-		// Score du personnage
-		int scorePerso = -5000;
-		
-		try {
-			// Récupération de l'arène
-			IArene arene = console.getArene();
-			
-			// Récupérations des caractéristiques du personnage
-			int vieMonPerso = console.getPersonnage().getCaract(Caracteristique.VIE);
-			int forceMonPerso = console.getPersonnage().getCaract(Caracteristique.FORCE);
-			int initMonPerso = console.getPersonnage().getCaract(Caracteristique.INITIATIVE);
-			int defenseMonPerso = console.getPersonnage().getCaract(Caracteristique.DEFENSE);
-			
-			// Récupération de la vie actuelle du perso et de notre souvenir
-			int viePerso = arene.caractFromRef(perso, Caracteristique.VIE);
-			MemoirePersonnage souvenir = memoireClervoyance.get(perso);
-			
-			// Calcul du score simple du personnage
-			
-			
-			
-			if (vieMonPerso > 75) { 
-				
-			} else if (vieMonPerso > 40) {
-				
-			} else { 
-				
-			}
-			
-			// Si le perso est assez mal, on va favoriser les popo
-			if (vieMonPerso < 50)
-				scorePerso -= (scorePerso / 2);
-			
-			// Si le perso est vraiment mal, favorise encore les popo
-			if (vieMonPerso < 25)
-				scorePerso -= (scorePerso / 2);
-			
-			
-		} catch (Exception e) {
-			e.printStackTrace();
-			scorePerso = -4000;
-		}
-		
-		return scorePerso;
-	}
-	
 	
 
 	/**
@@ -427,7 +400,7 @@ public class StrategiePersonnage {
 			int pireNbCoups = 0;
 			int vieVoisinTmp = vieVoisin;
 			
-			// Calcul du meilleur cas possible en combat (adversaire sans défenses)
+			// Calcul du meilleur cas possible en combat (adversaire sans défenses et passif)
 			do {
 				vieVoisinTmp -= forceMonPerso;
 				meilleurNbCoups ++;
@@ -464,6 +437,184 @@ public class StrategiePersonnage {
 				scorePerso *= 1.2;
 			else if (initMonPerso < 15)
 				scorePerso *= 0.8;
+			
+			// Si on est assez mal, on va éviter le combat
+			if (vieMonPerso < 50)
+				scorePerso -= (scorePerso / 3);
+			
+			// Si on perso est vraiment mal, on va éviter encore plus le combat
+			if (vieMonPerso < 25)
+				scorePerso -= (scorePerso / 2);
+			
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+			scorePerso = -4000;
+		}
+		
+		return scorePerso;
+	}
+	
+	
+	/**
+	 * Calcule le score d'un personnage en fonction de ses caractéristiques observées
+	 * par clervoyance et de son score simple.
+	 * @param perso Le personnage dont on veut calculer le score
+	 * @return Le score du personnage passée en paramètre, ou -5000 ou -4000 en cas de problème dans le calcul.
+	 */
+	private int calculScorePersoComplexe(int perso) {
+
+		// Score du personnage
+		int scorePerso = -5000;
+		
+		try {
+			// Récupération de l'arène
+			IArene arene = console.getArene();
+			
+			// Récupérations des caractéristiques du personnage
+			int vieMonPerso = console.getPersonnage().getCaract(Caracteristique.VIE);
+			int forceMonPerso = console.getPersonnage().getCaract(Caracteristique.FORCE);
+			int initMonPerso = console.getPersonnage().getCaract(Caracteristique.INITIATIVE);
+			int defenseMonPerso = console.getPersonnage().getCaract(Caracteristique.DEFENSE);
+			
+			// Récupération de la vie du voisin
+			int vieVoisin = arene.caractFromRef(perso, Caracteristique.VIE);
+			MemoirePersonnage souvenirClervoyance = MemoirePersonnage.getEntreeMemoire(memoireClervoyance, perso);
+			
+			/*
+			 * Calcul du score sans modificateurs
+			 */
+			
+			// Nombre de coups pour tuer l'adversaire
+			int meilleurNbCoups = 0;
+			int pireNbCoups = 0;
+			int vieVoisinTmp = vieVoisin;
+			int forceTmp = souvenirClervoyance.getForcePerso();
+			
+			// Calcul du meilleur cas possible en combat (adversaire sans défenses et passif)
+			do {
+				vieVoisinTmp -= forceMonPerso;
+				meilleurNbCoups ++;
+			} while (vieVoisinTmp > 0);
+			
+			// Calcul du meilleur cas possible en combat (adversaire défendu qui se régen)
+			vieVoisinTmp = vieVoisin;
+			do {
+				vieVoisinTmp -= forceMonPerso*(1 - forceTmp/100) - 2;
+				forceTmp = forceTmp < 10 ? 0 : forceTmp - 10;
+				pireNbCoups ++;
+			} while (vieVoisinTmp > 0);
+			
+			// Score du personnage
+			scorePerso = (-80*pireNbCoups+280)/2 + (-80*meilleurNbCoups+280)/2;
+			
+			/*
+			 * Application des modificateurs
+			 */
+			
+			// Bonus/Malus en fonction de la vie de l'adversaire
+			if (vieVoisin > 75)
+				scorePerso *= 0.7;
+			else if (vieVoisin < 45)
+				scorePerso *= 1.3;
+			
+			// Bonus/Malus en fonction du ratio d'initiative
+			scorePerso *= initMonPerso/souvenirClervoyance.getInitPerso() > 1 ? 1.1 : 0.9;
+
+			// Bonus/Malus en fonction du ratio de force
+			scorePerso *= forceMonPerso/souvenirClervoyance.getForcePerso() > 1 ? 1.15 : 0.95;
+			
+			// Bonus/Malus en fonction du ratio de défense
+			scorePerso *= defenseMonPerso/souvenirClervoyance.getDefensePerso() > 1 ? 1.15 : 0.95;
+			
+			// Si on est assez mal, on va éviter le combat
+			if (vieMonPerso < 50)
+				scorePerso -= (scorePerso / 3);
+			
+			// Si on perso est vraiment mal, on va éviter encore plus le combat
+			if (vieMonPerso < 25)
+				scorePerso -= (scorePerso / 2);
+			
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+			scorePerso = -4000;
+		}
+		
+		return scorePerso;
+	}
+	
+	/**
+	 * Calcule le score d'un monstre en fonction de ses caractéristiques et des notres.
+	 * @param perso Le monstre dont on veut calculer le score
+	 * @return Le score du monstre passée en paramètre, ou -5000 en cas de problème dans le calcul.
+	 */
+	private int calculScoreMinion(int perso) {
+
+		// Score du minion
+		int scorePerso = -5000;
+		
+		try {
+			// Récupération de l'arène
+			IArene arene = console.getArene();
+			
+			// Récupérations des caractéristiques du personnage
+			int vieMonPerso = console.getPersonnage().getCaract(Caracteristique.VIE);
+			int forceMonPerso = console.getPersonnage().getCaract(Caracteristique.FORCE);
+			int initMonPerso = console.getPersonnage().getCaract(Caracteristique.INITIATIVE);
+			int defenseMonPerso = console.getPersonnage().getCaract(Caracteristique.DEFENSE);
+			
+			// Récupération de la vie du voisin
+			int vieVoisin = arene.caractFromRef(perso, Caracteristique.VIE);
+			MemoirePersonnage souvenirClervoyance = MemoirePersonnage.getEntreeMemoire(memoireClervoyance, perso);
+			
+			
+			// TODO : Calcul du score du minion (MAX entre 120 et 220)
+			/*
+			 * Calcul du score sans modificateurs
+			 */
+			
+			// Nombre de coups pour tuer l'adversaire
+			int meilleurNbCoups = 0;
+			int pireNbCoups = 0;
+			int vieVoisinTmp = vieVoisin;
+			int forceTmp = souvenirClervoyance.getForcePerso();
+			
+			// Calcul du meilleur cas possible en combat (adversaire sans défenses et passif)
+			do {
+				vieVoisinTmp -= forceMonPerso;
+				meilleurNbCoups ++;
+			} while (vieVoisinTmp > 0);
+			
+			// Calcul du meilleur cas possible en combat (adversaire défendu qui se régen)
+			vieVoisinTmp = vieVoisin;
+			do {
+				vieVoisinTmp -= forceMonPerso*(1 - forceTmp/100) - 2;
+				forceTmp = forceTmp < 10 ? 0 : forceTmp - 10;
+				pireNbCoups ++;
+			} while (vieVoisinTmp > 0);
+			
+			// Score du personnage
+			scorePerso = (-80*pireNbCoups+280)/2 + (-80*meilleurNbCoups+280)/2;
+			
+			/*
+			 * Application des modificateurs
+			 */
+			
+			// Bonus/Malus en fonction de la vie de l'adversaire
+			if (vieVoisin > 75)
+				scorePerso *= 0.7;
+			else if (vieVoisin < 45)
+				scorePerso *= 1.3;
+			
+			// Bonus/Malus en fonction du ratio d'initiative
+			scorePerso *= initMonPerso/souvenirClervoyance.getInitPerso() > 1 ? 1.1 : 0.9;
+
+			// Bonus/Malus en fonction du ratio de force
+			scorePerso *= forceMonPerso/souvenirClervoyance.getForcePerso() > 1 ? 1.15 : 0.95;
+			
+			// Bonus/Malus en fonction du ratio de défense
+			scorePerso *= defenseMonPerso/souvenirClervoyance.getDefensePerso() > 1 ? 1.15 : 0.95;
 			
 			// Si on est assez mal, on va éviter le combat
 			if (vieMonPerso < 50)

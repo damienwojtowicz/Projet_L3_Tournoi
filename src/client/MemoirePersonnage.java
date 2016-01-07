@@ -26,6 +26,15 @@ public class MemoirePersonnage {
 		return false;
 	}
 	
+
+	public static MemoirePersonnage getEntreeMemoire(ArrayList<MemoirePersonnage> memoire, int refPerso) {
+		for (MemoirePersonnage m : memoire) {
+			if (m.getRefPerso() == refPerso)
+				return m;
+		}
+		return null;
+	}
+	
 	
 	public static ArrayList<MemoirePersonnage> nettoyerMemoire(ArrayList<MemoirePersonnage> memoire, int tourCourant) {
 		if (memoire.equals(null))
@@ -37,6 +46,18 @@ public class MemoirePersonnage {
 		}
 		return memoire;
 	}
+	
+	
+	public static ArrayList<MemoirePersonnage> updateMemoire(ArrayList<MemoirePersonnage> memoire, int refPerso, HashMap<Caracteristique,Integer> vision, int tourClairvoyance) {
+		for (MemoirePersonnage m : memoire) {
+			if (m.getRefPerso() == refPerso) {
+				m = new MemoirePersonnage(refPerso, vision, tourClairvoyance);
+			}
+		}
+		
+		return memoire;
+	}
+	
 	
 	public MemoirePersonnage(int refPerso, HashMap<Caracteristique,Integer> vision, int tourClairvoyance) {
 		this.refPerso = refPerso;
@@ -61,6 +82,7 @@ public class MemoirePersonnage {
 		}
 	}
 
+	
 	public int getRefPerso() {
 		return refPerso;
 	}
