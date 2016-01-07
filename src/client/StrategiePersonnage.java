@@ -317,18 +317,26 @@ public class StrategiePersonnage {
 	/**
 	 * Commande le calcul du score d'un personnage.
 	 * @param perso Le personnage dont on veut calculer le score
-	 * @return Le score du personnage passée en paramètre, ou -5000 ou -4000 en cas de problème dans le calcul.
+	 * @return Le score du personnage passée en paramètre
 	 */
 	private int calculScorePerso(int perso) {
 		
-		// Si on a déjà observé le personnage, on fait une analyse qualitative
-		if (MemoirePersonnage.dansMemoire(memoireClervoyance, perso))
-			return calculScorePersoQuantitatif(perso);
+		
+		try {
+			// Si on a déjà observé le personnage, on fait une analyse quantitative
+			if (MemoirePersonnage.dansMemoire(memoireClervoyance, perso)) {
+				int depuisCelervoyance = console.getArene().getTour() - memoireClervoyance.get(perso).getTourClairvoyance();
+
+				// On fait une moyenne pondérée avec une analyse quantitative
+				return calculScorePersoQualitatif(perso) * depuisCelervoyance/60 
+						+ calculScorePersoQuantitatif(perso) * (60-depuisCelervoyance)/60;
+			}
+		} catch (RemoteException e) {
+			e.printStackTrace();
+		}
 			
 		// Sinon, on fait une analyse quantitative
-		else
-			return calculScorePersoQualitatif(perso);
-		
+		return calculScorePersoQualitatif(perso);
 	}
 	
 	

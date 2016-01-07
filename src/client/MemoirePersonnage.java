@@ -32,7 +32,7 @@ public class MemoirePersonnage {
 			return null;
 		
 		for (MemoirePersonnage m : memoire) {
-			if (m.getTourClairvoyance() < tourCourant - 10)
+			if (m.getTourClairvoyance() < tourCourant - 60)
 				memoire.remove(m);
 		}
 		return memoire;
