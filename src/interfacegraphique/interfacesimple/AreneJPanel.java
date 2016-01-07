@@ -304,7 +304,7 @@ public class AreneJPanel extends JPanel {
 		
 		// remplissage de la jauge
 		Integer hp = vueElement.getElement().getCaract(Caracteristique.VIE);
-		int hpWidth = hp * barWidth / 100;
+		int hpWidth = hp * barWidth / Caracteristique.VIE.getMax();
 		
 		g.setColor(new Color(183, 28, 28));
 		g.fillRect(coordXBar, coordYBar, hpWidth, barHeight);

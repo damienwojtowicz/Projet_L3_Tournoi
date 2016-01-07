@@ -1,4 +1,3 @@
-
 package lanceur;
 
 import java.awt.Point;
