@@ -164,8 +164,22 @@ public class StrategiePersonnage {
 				
 				} else if (listeVoisinsProches.size() > 1) {
 					// Si on est en présence de plusieurs adversaires, on cherche le point le plus safe pour fuir
-					Point fuite = recherchePointSafe(listeVoisinsProches, position);
-				
+					ArrayList<Point> zoneFuite = recherchePointSafe(listeVoisinsProches, position);
+					Point lieuFuite = zoneFuite.equals(null) ? null : zoneFuite.iterator().next();
+					
+					// Si on peut fuit, on part
+					if (!lieuFuite.equals(null)) {
+						console.setPhrase("Cassos !!!");
+						arene.deplace(refRMI, lieuFuite); 
+					
+					} else {
+						// Sinon on attaque le premier venu...
+						refVois = listeVoisinsProches.iterator().next();
+						console.setPhrase("Pourquoi tu m'embêtes " + arene.nomFromRef(refVois) + "-" + refVois + " ?");
+						arene.lanceAttaque(refRMI, refVois); 
+					}
+						
+					
 				} else {
 					// Sinon, on erre
 					console.setPhrase("Pas de voisin sympa (" + arene.nomFromRef(refVois) + "-" + refVois + " à " + scoreVois + ")");
@@ -189,31 +203,50 @@ public class StrategiePersonnage {
 					} else {
 						// Sinon, on se plaint...
 						console.setPhrase("M'aurait-on menti ?");
+						arene.lanceAutoSoin(refRMI);
 					}
 					
 				} else { 
-					// Sinon, on analyse la situation plus finement...
-					console.setPhrase("Je vais vers mon voisin " + arene.nomFromRef(refVois) + "-" + refVois + " à " + scoreVois);
-					arene.deplace(refRMI, refVois);
+					MemoirePersonnage souvenir = MemoirePersonnage.getEntreeMemoire(memoireClervoyance, refVois);
 					
-					// TODO : Déplacement vers perso
-					/*
-					 * Si target sur perso :
-					 * 		Clervoyance si pas fait depuis 10 tours
-					 * 		Dépacement vers lui sinon
-					 * Fsi
-					 * 
-					 * Si perso à portée possible au prochain tour
-					 * 		Si clervoyance pas faite depuis 5 tours
-					 * 			Clervoyance
-					 * 		Sinon si son initiative >= la notre OU sa force - notre défense > notre vie * 1.2
-					 * 			Déplacment en bordure de sa zone d'action
-					 * 		Sinon
-					 * 			Déplacement au CàC
-					 * Sinon
-					 * 		Clervoyance
-					 * Fsi
-					 */
+					// Si c'est un personnage, c'est compliqué...
+					if (arene.estPersonnageFromRef(refVois)) {
+						
+						if (Calculs.distanceChebyshev(position, arene.getPosition(refVois)) == 4) {
+							// Si on n'a pas lu en lui depuis 5 tours, on vérifie ses stats
+							if (souvenir.getTourClairvoyance() < arene.getTour() - 5) {
+								console.setPhrase("Je vois en toi, " + arene.nomFromRef(refVois) + "-" + refVois + " !");
+								MemoirePersonnage.updateMemoire(memoireClervoyance, refVois, 
+										arene.lanceClairvoyance(refRMI, refVois), 
+										arene.getTour());
+
+							// Sinon, on se déplace près de lui
+							} else {
+								console.setPhrase("Je viens, " + arene.nomFromRef(refVois) + "-" + refVois + " !");
+								arene.deplace(refRMI, refVois);	
+							}
+							
+						} else {
+							// Si on n'a pas lu en lui depuis 10 tours, on vérifie ses stats
+							if (souvenir.getTourClairvoyance() < arene.getTour() - 10) {
+								console.setPhrase("Je vois en toi, " + arene.nomFromRef(refVois) + "-" + refVois + " !");
+								MemoirePersonnage.updateMemoire(memoireClervoyance, refVois, 
+										arene.lanceClairvoyance(refRMI, refVois), 
+										arene.getTour());
+
+							// Sinon, on se déplace près de lui
+							} else {
+								console.setPhrase("Je viens, " + arene.nomFromRef(refVois) + "-" + refVois + " !");
+								arene.deplace(refRMI, refVois);	
+							}
+						}
+						
+					// Sinon, on va vers lui...
+					} else {
+						console.setPhrase("Je viens, " + arene.nomFromRef(refVois) + "-" + refVois + " !");
+						arene.deplace(refRMI, refVois);
+					}
+					
 				}
 			}
 		}
@@ -221,11 +254,11 @@ public class StrategiePersonnage {
 	
 
 	/**
-	 * Détermine un point safe où se déplacer.
+	 * Détermine une zone safe où se déplacer.
 	 * @param voisins La liste des voisins
-	 * @return Les voisins qui peuvent nous attaquer.
+	 * @return Les points où on ne peut pas nous attaquer.
 	 */
-	private Point recherchePointSafe(ArrayList<Integer> voisinsProches, Point positionActuelle) {
+	private ArrayList<Point> recherchePointSafe(ArrayList<Integer> voisinsProches, Point positionActuelle) {
 		// Génération de la liste des possibles
 		ArrayList<Point> pointsProches = new ArrayList<Point>();
 		int x;
@@ -257,8 +290,7 @@ public class StrategiePersonnage {
 			}
 		}
 		
-		if (pointsProches.equals(null));
-		return null;
+		return pointsProches;
 	}
 	
 
