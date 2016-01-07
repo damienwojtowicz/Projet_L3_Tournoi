@@ -12,9 +12,12 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Queue;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.Map.Entry;
 
@@ -154,6 +157,7 @@ public class Arene extends UnicastRemoteObject implements IAreneIHM, Runnable {
 		
 		// reperere le debut de la partie dans le temps
 		long derniereReduction = System.currentTimeMillis();
+		int  interv = 0;
 		
 		while(!partieFinie) {
 			// moment de debut du tour
@@ -220,9 +224,10 @@ public class Arene extends UnicastRemoteObject implements IAreneIHM, Runnable {
 				// reinit le timer
 				derniereReduction = System.currentTimeMillis();
 				logger.info("2 min depasse");
-				reduireArene();
+				reduireAgrandirPseudoSinus(interv ++);
 			}
 			verifPersoBornes(personnages);
+			supprimePotionsHorsBornes(potions);
 			
 			try {
 				long dureeTour = System.currentTimeMillis() - begin;
@@ -663,11 +668,15 @@ public class Arene extends UnicastRemoteObject implements IAreneIHM, Runnable {
 		List<VuePersonnage> classement = new ArrayList<VuePersonnage>();
 		
 		for(VuePersonnage vue : this.personnages.values()) {
-			classement.add(vue);
+			if(!(vue.getElement() instanceof Monstre)) { // ne pas ajouter les monstres
+				classement.add(vue);
+			}
 		}
 		
 		for(VuePersonnage vuePers : personnagesMorts) {
-			classement.add(vuePers);
+			if(!(vuePers.getElement() instanceof Monstre)) { // ne pas ajouter les monstres
+				classement.add(vuePers);
+			}
 		}
 		
 		Collections.sort(classement, new ComparatorVuePersonnage());
@@ -1102,10 +1111,26 @@ public class Arene extends UnicastRemoteObject implements IAreneIHM, Runnable {
 	/**
 	 * Reduit la taille de la zone jouable.
 	 */
-	public void reduireArene() {
+	/*
+	private void reduireArene() {
 		if (this.getOffset() * 2 < Constantes.MINIMUM_ARENE)
 		{
 		 	Calculs.setOffset(Calculs.getOffset() + 5);
+		}
+	}
+	*/
+	
+	/**
+	 * Fonction pour faire jolie dans une arène illimitée
+	 * @param intervalle
+	 */
+	private void reduireAgrandirPseudoSinus(int intervalle) {
+		// si on est dans les 5 dernier intervalles : augmenter
+		if ((intervalle % 10) >= 5) {
+			Calculs.setOffset(Calculs.getOffset() - 5);
+		}
+		else {
+			Calculs.setOffset(Calculs.getOffset() + 5);
 		}
 	}
 	
@@ -1122,7 +1147,7 @@ public class Arene extends UnicastRemoteObject implements IAreneIHM, Runnable {
 		for (Entry<Integer, VuePersonnage> entry : lsperso.entrySet())
 		{
 			VuePersonnage perso = entry.getValue();
-			boolean ok = verifDansBorne(perso.getPosition());
+			boolean ok = Calculs.estDansArene(perso.getPosition());
 			if (! ok)
 			{
 				// décaler le personnage sur la position la plus proche dans l'arène
@@ -1144,20 +1169,29 @@ public class Arene extends UnicastRemoteObject implements IAreneIHM, Runnable {
 			}
 		}
 	}
+
 	
 	/**
-	 * Verifie UN personnage
+	 *  vérifie que chaque potion est dans l'arène JOUABLE
+	 * @param lspotion liste des potions
 	 */
-	private boolean verifDansBorne(Point p)
-	{
-		return
-			(p.x > Constantes.XMIN_ARENE + getOffset()) &&
-			(p.x < Constantes.XMAX_ARENE - getOffset()) &&
-			(p.y > Constantes.YMIN_ARENE + getOffset()) &&
-			(p.y < Constantes.YMAX_ARENE - getOffset());
+	private void supprimePotionsHorsBornes(Hashtable<Integer, VuePotion> lspotion) {
+		VuePotion p = null;
+		Set<Entry<Integer, VuePotion>> sentry = lspotion.entrySet();
+		Iterator<Map.Entry<Integer, VuePotion>> it = sentry.iterator();
+		
+		
+		while (it.hasNext())
+		{
+			p = it.next().getValue();
+			
+			// si la potion est hors-bornes, supprimer
+			if (! Calculs.estDansArene(p.getPosition()))
+				it.remove();
+		}
 	}
 
-
+	
 
 	/**************************************************************************
 	 * Specifique a l'arene tournoi.
@@ -1176,6 +1210,9 @@ public class Arene extends UnicastRemoteObject implements IAreneIHM, Runnable {
 
 	@Override
 	public void lancePotion(Potion potion, Point position, String motDePasse) throws RemoteException {}
+
+	@Override
+	public void lancePotionTP(PotionTP potion, Point position, String motDePasse) throws RemoteException {}
 
 	public class ComparatorVuePersonnage implements Comparator<VuePersonnage> {
 

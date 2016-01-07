@@ -13,6 +13,7 @@ import serveur.element.Caracteristique;
 import serveur.element.Monstre;
 import serveur.element.Personnage;
 import serveur.element.Potion;
+import serveur.element.PotionTP;
 import serveur.vuelement.VuePersonnage;
 import serveur.vuelement.VuePotion;
 import utilitaires.Constantes;
@@ -40,8 +41,8 @@ public class AreneTournoi extends Arene {
 	private boolean partieCommencee;
 
 	
-	private String[] groupes = new String[30]; // contient le nom de chaque groupe present dans l'arene
-	private int nombreGroupes = 0; // Nombre de groupes dans l'arene
+	//private String[] groupes = new String[30]; // contient le nom de chaque groupe present dans l'arene
+	//private int nombreGroupes = 0; // Nombre de groupes dans l'arene
 	
 	/**
 	 * Constructeur de l'arene de tournoi.
@@ -90,6 +91,7 @@ public class AreneTournoi extends Arene {
 		int portConsole = port + refRMI;
 		String adr = Constantes.nomRMI(ipConsole, portConsole, "Console" + refRMI);
 		
+		/*
 		for (int i = 0; i < nombreGroupes; i++) { // Verification que le personnage ne fait pas parti d'un groupe deja present
 			if (personnage.getGroupe().equals(groupes[i])) {
 				logger.info(Constantes.nomClasse(this), 
@@ -98,6 +100,7 @@ public class AreneTournoi extends Arene {
 			}
 		}
 		groupes[nombreGroupes++] = personnage.getGroupe();
+		*/
 		
 		// Verification des caracteristiques de chaque personnages
 		if((personnage.getCaract(Caracteristique.FORCE) != 30 || personnage.getCaract(Caracteristique.VIE) != 100 
@@ -110,25 +113,27 @@ public class AreneTournoi extends Arene {
 			
 			
 
-		}else{
-				
-			if(numeroPersonnage < 10){
-				if(partieCommencee && !(personnage instanceof Monstre)) {
-					// refus si la partie a commence
+		} else {
+			if(!(personnage instanceof Monstre)) { // les monstres peuvent etre envoyes tout le temps
+				if(numeroPersonnage < 10){
+					if(partieCommencee) {
+						// refus si la partie a commence
+						res = false;
+						
+						logger.info(Constantes.nomClasse(this), 
+								"Demande de connexion refusee (partie deja commencee) (" + adr + ")");
+					} else {
+						position = lstCoord.get(numeroPersonnage);
+						numeroPersonnage += 1;
+						res = super.connecte(refRMI, ipConsole, personnage, nbTours, position);
+					}
+				} else {
 					res = false;
 					
-					logger.info(Constantes.nomClasse(this), 
-							"Demande de connexion refusee (partie deja commencee) (" + adr + ")");
-				} else {
-					position = lstCoord.get(numeroPersonnage);
-					numeroPersonnage += 1;
-					res = super.connecte(refRMI, ipConsole, personnage, nbTours, position);
+					logger.info(Constantes.nomClasse(this),"Demande de connexion refusee (nombre de joueurs = 10) (" + adr + ")");
 				}
-			}else{
-				// refus si la partie a commence
-				res = false;
-				
-				logger.info(Constantes.nomClasse(this),"Demande de connexion refusee (nombre de jouers = 10) (" + adr + ")");
+			} else {
+				res = super.connecte(refRMI, ipConsole, personnage, nbTours, position);
 			}
 		
 			
@@ -178,6 +183,7 @@ public class AreneTournoi extends Arene {
 		if (motDePasse.equals(motDePasse)) {
 			int refRMI = alloueRefRMI();
 			VuePotion vuePotion = new VuePotion(potion, position, refRMI);
+			vuePotion.setPhrase("Caracteristiques !");
 			
 			// ajout a la liste
 			potions.put(refRMI, vuePotion);
@@ -187,6 +193,24 @@ public class AreneTournoi extends Arene {
 			logElements();
 		} else {
 			logger.info("Tentative de lancement de potion avec mot de passe errone");
+		}	
+	}
+
+	@Override
+	public synchronized void lancePotionTP(PotionTP potion, Point position, String motDePasse) throws RemoteException {
+		if (motDePasse.equals(motDePasse)) {
+			int refRMI = alloueRefRMI();
+			VuePotion vuePotion = new VuePotion(potion, position, refRMI);
+			vuePotion.setPhrase("Teleportation !");
+			
+			// ajout a la liste
+			potions.put(refRMI, vuePotion);
+			
+			logger.info(Constantes.nomClasse(this), "Lancement de la potion de teleportation " + 
+					vuePotion.getElement().getNomGroupe() + " (" + refRMI + ")");
+			logElements();
+		} else {
+			logger.info("Tentative de lancement de potion de teleportation avec mot de passe errone");
 		}	
 	}
 
@@ -211,7 +235,23 @@ public class AreneTournoi extends Arene {
 		super.verifierPartieFinie();
 		
 		// la partie est aussi terminee s'il n'y a qu'un seul personnage
-		partieFinie = partieFinie || personnages.size() <= 1;
+		partieFinie = partieFinie || compterPersonnages() <= 1;
+	}
+	
+	/**
+	 * Compte le nombre de personnages restants (pas les monstres). 
+	 * @return
+	 */
+	private int compterPersonnages() {
+		int cpt = 0;
+		
+		for(VuePersonnage vp : personnages.values()) {
+			if(!(vp.getElement() instanceof Monstre)) {
+				cpt++;
+			}
+		}
+		
+		return cpt;
 	}
 	
 	@Override

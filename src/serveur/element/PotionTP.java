@@ -1,7 +1,5 @@
 package serveur.element;
 
-import java.util.HashMap;
-
 /**
  * Une potion: un element donnant des bonus aux caracteristiques de celui qui
  * le ramasse.
@@ -15,9 +13,8 @@ public class PotionTP extends Potion {
 	 * caracteristiques (ajoutees lorsqu'un Personnage ramasse cette potion).
 	 * @param nom nom de la potion
 	 * @param groupe groupe d'etudiants de la potion
-	 * @param caracts caracteristiques de la potion
 	 */
-	public PotionTP(String nom, String groupe, HashMap<Caracteristique, Integer> caracts) {
-		super(nom, groupe, caracts);
+	public PotionTP(String nom, String groupe) {
+		super(nom, groupe, Caracteristique.mapCaracteristiquesNul()); 
 	}
 }

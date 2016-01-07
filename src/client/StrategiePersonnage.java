@@ -26,7 +26,7 @@ public class StrategiePersonnage {
 	 */
 	protected Console console;
 	
-	private static ArrayList<MemoirePersonnage> memoireClervoyance = new ArrayList();
+	private static ArrayList<MemoirePersonnage> memoireClervoyance = new ArrayList<MemoirePersonnage>();
 	private static int memoireAttaque;
 	private static int memoireTarget;
 	
@@ -75,7 +75,6 @@ public class StrategiePersonnage {
 		// arene
 		IArene arene = console.getArene();
 		
-
 		// Nettoyage des entrées obsolètes dans le mémoire
 		memoireClervoyance = MemoirePersonnage.nettoyerMemoire(memoireClervoyance, arene.getTour());
 		
@@ -165,6 +164,15 @@ public class StrategiePersonnage {
 			// Pas de voisin intéressant...
 			if (scoreVois <= -200) {
 			
+				int voisinPlusProche = Calculs.chercheElementProche(position, voisins);
+				
+				// Si on est dans le rayon d'action d'un personnage, on tape.
+				if (Calculs.distanceChebyshev(position, arene.getPosition(voisinPlusProche)) <= 2) {
+					arene.lanceAttaque(refRMI, voisinPlusProche);
+				} else {
+				// TODO	int[][]
+				}
+					
 				// Si on est dans le rayon d'action de plusieurs personnages, on s'échappe
 				// TODO : s'échapper !
 				

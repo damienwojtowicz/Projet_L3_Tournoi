@@ -28,6 +28,15 @@ public class Monstre extends Personnage {
 	 * Construit un monstre
 	 */
 	public Monstre() {
+		super("Monstre", "Arene", CARACTS);
+	}
+
+	/**
+	 * Construit un monstre
+	 * @param nom nom
+	 * @param groupe groupe
+	 */
+	public Monstre(String nom, String groupe) {
 		super("Monstre", "Serveur", CARACTS);
 	}
 }
