@@ -70,6 +70,8 @@ public class StrategiePersonnage {
 	 * @throws RemoteException
 	 */
 	public void executeStrategie(HashMap<Integer, Point> voisins) throws RemoteException {
+		// Message à afficher...
+		String message = "";
 		
 		// arene
 		IArene arene = console.getArene();
@@ -102,12 +104,12 @@ public class StrategiePersonnage {
 			
 			// Je me soigne jusqu'à être regénéré
 			if (console.getPersonnage().getCaract(Caracteristique.VIE) < 100) {
-				console.setPhrase("Je me soigne");
+				message += "Je me soigne";
 				arene.lanceAutoSoin(refRMI);
 			
 			// Puis je me déplace
 			} else {
-				console.setPhrase("J'erre...");
+				message += "J'erre...";
 				arene.deplace(refRMI, 0);
 			}
 		
@@ -169,21 +171,30 @@ public class StrategiePersonnage {
 					
 					// Si on peut fuit, on part
 					if (!lieuFuite.equals(null)) {
-						console.setPhrase("Cassos !!!");
+						message += "Cassos !!!";
 						arene.deplace(refRMI, lieuFuite); 
 					
 					} else {
 						// Sinon on attaque le premier venu...
 						refVois = listeVoisinsProches.iterator().next();
-						console.setPhrase("Pourquoi tu m'embêtes " + arene.nomFromRef(refVois) + "-" + refVois + " ?");
+						message += "Pourquoi tu m'embêtes " + arene.nomFromRef(refVois) + "-" + refVois + " ?";
 						arene.lanceAttaque(refRMI, refVois); 
 					}
 						
-					
+				
+				// Peut correspondre à l'état PLS
 				} else {
-					// Sinon, on erre
-					console.setPhrase("Pas de voisin sympa (" + arene.nomFromRef(refVois) + "-" + refVois + " à " + scoreVois + ")");
-					arene.deplace(refRMI, 0); 
+					
+					// Je me soigne jusqu'à être regénéré
+					if (console.getPersonnage().getCaract(Caracteristique.VIE) < 100) {
+						message += "Je me soigne";
+						arene.lanceAutoSoin(refRMI);
+					
+					// Puis je me déplace
+					} else {
+						message += "J'erre...";
+						arene.deplace(refRMI, 0);
+					}
 				}
 			
 			} else {
@@ -192,17 +203,17 @@ public class StrategiePersonnage {
 					
 					if (arene.estPotionFromRef(refVois)) {
 						// Si c'est une popo, on la boit !
-						console.setPhrase("Je bois ma potion cible !");
+						message += "Je bois ma potion cible !";
 						arene.ramassePotion(refRMI, refVois);
 					
 					} else if (arene.estPersonnageFromRef(refVois)) {
 						// Si c'est un perso, on attaque !
-						console.setPhrase("En garde, " + arene.nomFromRef(refVois) + "-" + refVois + " !");
+						message += "En garde, " + arene.nomFromRef(refVois) + "-" + refVois + " !";
 						arene.lanceAttaque(refRMI, refVois);
 						
 					} else {
 						// Sinon, on se plaint...
-						console.setPhrase("M'aurait-on menti ?");
+						message += "M'aurait-on menti ?";
 						arene.lanceAutoSoin(refRMI);
 					}
 					
@@ -215,41 +226,48 @@ public class StrategiePersonnage {
 						if (Calculs.distanceChebyshev(position, arene.getPosition(refVois)) == 4) {
 							// Si on n'a pas lu en lui depuis 5 tours, on vérifie ses stats
 							if (souvenir.getTourClairvoyance() < arene.getTour() - 5) {
-								console.setPhrase("Je vois en toi, " + arene.nomFromRef(refVois) + "-" + refVois + " !");
+								message += "Je vois en toi, " + arene.nomFromRef(refVois) + "-" + refVois + " !";
 								MemoirePersonnage.updateMemoire(memoireClervoyance, refVois, 
 										arene.lanceClairvoyance(refRMI, refVois), 
 										arene.getTour());
 
 							// Sinon, on se déplace près de lui
 							} else {
-								console.setPhrase("Je viens, " + arene.nomFromRef(refVois) + "-" + refVois + " !");
+								message += "Je viens, " + arene.nomFromRef(refVois) + "-" + refVois + " !";
 								arene.deplace(refRMI, refVois);	
 							}
 							
 						} else {
 							// Si on n'a pas lu en lui depuis 10 tours, on vérifie ses stats
 							if (souvenir.getTourClairvoyance() < arene.getTour() - 10) {
-								console.setPhrase("Je vois en toi, " + arene.nomFromRef(refVois) + "-" + refVois + " !");
+								message += "Je vois en toi, " + arene.nomFromRef(refVois) + "-" + refVois + " !";
 								MemoirePersonnage.updateMemoire(memoireClervoyance, refVois, 
 										arene.lanceClairvoyance(refRMI, refVois), 
 										arene.getTour());
 
 							// Sinon, on se déplace près de lui
 							} else {
-								console.setPhrase("Je viens, " + arene.nomFromRef(refVois) + "-" + refVois + " !");
+								message += "Je viens, " + arene.nomFromRef(refVois) + "-" + refVois + " !";
 								arene.deplace(refRMI, refVois);	
 							}
 						}
 						
 					// Sinon, on va vers lui...
 					} else {
-						console.setPhrase("Je viens, " + arene.nomFromRef(refVois) + "-" + refVois + " !");
+						message += "Je viens, " + arene.nomFromRef(refVois) + "-" + refVois + " !";
 						arene.deplace(refRMI, refVois);
 					}
 					
 				}
 			}
 		}
+		
+		// Soin en cas de bug
+		//message += "Je suis buggé...";
+		//arene.lanceAutoSoin(refRMI);
+		
+		console.setPhrase(message + " Fin tour");
+		
 	}
 	
 
